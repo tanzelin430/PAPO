@@ -8,10 +8,10 @@ import requests
 INPUT_JSONL = "test1.jsonl"
 OUTPUT_JSONL = "test2.jsonl"
 
-API_BASE = "http://35.220.164.252:3888"
-CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
+API_BASE = ""
+CHAT_COMPLETIONS_PATH = ""
 
-API_KEY = "sk-yWs2v88jHxDw1q32AH4eHtWCVGjdvBwAWdwZfdYWKLi2XiMK"
+API_KEY = ""
 
 META_MODEL_NAME = "gpt-5"
 

@@ -11,8 +11,8 @@ import requests
 INPUT_JSONL = "test0.jsonl"
 OUTPUT_JSONL = "test1.jsonl"
 
-API_BASE = "http://35.220.164.252:3888"
-API_KEY = "sk-c5DJzi4GnZBofIc2fYhtCLMErxdMHvhrnvqZxnpRIRnofBCm"
+API_BASE = ""
+API_KEY = ""
 
 VERIFIER_MODEL_NAME = "gpt-5"
 
@@ -21,7 +21,7 @@ MAX_TOKENS = 8192
 MAX_RETRIES = 3
 RETRY_SLEEP_SECONDS = 5
 
-CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
+CHAT_COMPLETIONS_PATH = ""
 
 
 PROMPT_VERIFICATION = """

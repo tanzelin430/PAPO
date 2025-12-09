@@ -6,17 +6,17 @@ import requests
 from datasets import load_dataset
 
 
-API_BASE = "http://35.220.164.252:3888"
-CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
+API_BASE = ""
+CHAT_COMPLETIONS_PATH = ""
 
-API_KEY = "sk-c5DJzi4GnZBofIc2fYhtCLMErxdMHvhrnvqZxnpRIRnofBCm"
+API_KEY = ""
 
 MODEL_NAME = "Qwen/Qwen3-8B"
 
 N_CANDIDATES = 1
 MAX_PROBLEMS = 1
 
-OUTPUT_JSONL = "test.jsonl"
+OUTPUT_JSONL = "test0s.jsonl"
 
 PROMPT_TEMPLATE = """
 Your task is to solve a given problem. The problem may ask you to prove a statement, or ask for an answer. If finding an answer is required, you should come up with the answer, and your final solution should also be a rigorous proof of that answer being valid.
