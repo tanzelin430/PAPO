@@ -1,4 +1,3 @@
-# download_aops_instruct.py
 
 from datasets import load_dataset
 

@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 
 import json
 
-INPUT_JSONL = "test3.jsonl"
+INPUT_JSONL = "test2.jsonl"
 OUTPUT_JSONL = "test.jsonl"
 
 
