@@ -1,61 +1,46 @@
 import json
 import time
-from typing import List, Dict, Any, Optional
+import os
+from typing import List, Dict, Any, Optional, Set, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 import requests
 from datasets import load_dataset
 
 
-API_BASE = ""
-CHAT_COMPLETIONS_PATH = ""
+API_BASE = "http://35.220.164.252:3888/v1/"
+CHAT_COMPLETIONS_PATH = "/chat/completions"
 
-API_KEY = ""
+API_KEY = "sk-7LyupxC6GN7FPr2KLGO5nprvJpyKG6kRcqesJeLpUqzfeDiq"
 
 MODEL_NAME = "Qwen/Qwen3-8B"
 
 N_CANDIDATES = 1
-MAX_PROBLEMS = 1
+MAX_PROBLEMS = 2000  # Set to desired number, or -1 for all problems
 
 OUTPUT_JSONL = "test0.jsonl"
+RESUME = False  # Set to True to resume from breakpoint
+CONCURRENT_WORKERS = 8  # Number of parallel requests (set to 1 for sequential)
+
+# Thread lock for writing to file
+file_lock = threading.Lock()
 
 PROMPT_TEMPLATE = """
 Your task is to solve a given problem. The problem may ask you to prove a statement, or ask for an answer. If finding an answer is required, you should come up with the answer, and your final solution should also be a rigorous proof of that answer being valid.
 
-Your final solution to the problem should be exceptionally comprehensive and easy-to-follow, which will be rated according to the following evaluation instruction:
+Your final solution to the problem should be exceptionally comprehensive and easy-to-follow. A good solution should satisfy the following criteria:
 
-''' txt
-Here is the instruction to evaluate the quality of a solution to a problem. The problem may ask for a proof of statement, or ask for an answer. If finding an answer is required, the solution should present the answer, and it should also be a rigorous proof of that answer being valid.
+- The solution should be completely correct, with all steps executed properly and clearly demonstrated.
+- The proof must be rigorous. Every step must be logically justified and clearly explained.
+- Additionally, referencing anything from any paper does not save the need to prove the reference. It is okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise, if the solution omits the proof or if the proof provided is not completely correct, the solution is incomplete.
 
-Please evaluate the solution and score it according to the following criteria:
-
-- If the solution is completely correct, with all steps executed properly and clearly demonstrated, then the score is 1.
-- If the solution is generally correct, but with some details omitted or minor errors, then the score is 0.5.
-- If the solution does not actually address the required problem, contains fatal errors, or has severe omissions, then the score is 0.
-
-Additionally, referencing anything from any paper does not save the need to prove the reference. It is okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise, if the solution omits the proof or if the proof provided is not completely correct, the solution should be scored according to the criteria above, and definitely not with a score of 1.
-'''
-
-In fact, you already have the ability to rate your solution yourself, so you are expected to reason carefully about how to solve a given problem, evaluate your method according to the instruction, and refine your solution by fixing issues identified until you can make no further progress.
-
-In your final response, you should present a detailed solution to the problem followed by your evaluation of that solution.
-
-- To give a good final response, you should try your best to locate potential issues in your own (partial) solution according to the evaluation instruction above, and fix them as many as you can.
-- A good final response should just faithfully present your progress, including the best solution you can give, as well as a faithful evaluation of that solution.
-- Only when you fail to locate any issues in your solution should you score it with 1.
-- If you do notice some issues in your solution but fail to resolve them with your best efforts, it is totally okay to faithfully present the issues in your final response.
-- The worst final response would provide a wrong solution but lie that it is correct or claim that it is correct without careful error checking. A better version should faithfully identify errors in the solution. Remember! You CAN'T cheat! If you cheat, we will know, and you will be penalized!
+Important: You must be honest and rigorous in your proof. Do not fabricate steps, skip crucial reasoning, or claim something is true without proper justification. Remember! You CAN'T cheat! If you cheat, we will know, and you will be penalized!
 
 Your final response should be in the following format:
 
-## Solution// Your final solution should start with this exact same markdown title
-... // Your final solution to the problem here. You should try your best to optimize the quality of your solution according to the evaluation instruction above before finalizing it here.
-
-## Self Evaluation// Your evaluation of your own solution above should start with this exact same markdown title
-Here is my evaluation of the solution:// Your analysis should start with this exact same phrase
-... // Your evaluation here. You are required to present in detail the key steps of the solution or the steps for which you had doubts regarding their correctness, and explicitly analyze whether each step is accurate: for correct steps, explain why you initially doubted their correctness and why they are indeed correct; for erroneous steps, explain the reason for the error and the impact of that error on the solution. You should analyze your solution faithfully. For example, if there are issues in your final solution, you should point them out.
-
-Based on my evaluation, the final overall score should be:
-\\boxed{{...}} // where ... should be the final overall score (0, 0.5, or 1, and nothing else) based on the evaluation instruction above. You should reach this score ONLY AFTER careful re-examination of your own solution above.
+## Solution
+... // Your final solution to the problem here.
 
 ---
 Here is your task input:
@@ -118,6 +103,23 @@ def call_qwen_chat(
     return contents
 
 
+def load_completed_indices(output_path: str) -> Set[int]:
+    """Load indices of already completed problems from output file."""
+    completed = set()
+    if os.path.exists(output_path):
+        with open(output_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                    completed.add(record.get("index", -1))
+                except json.JSONDecodeError:
+                    continue
+    return completed
+
+
 def get_aops_questions(max_problems: int) -> List[str]:
     """
     Load the AoPS-Instruct train split from Hugging Face and extract
@@ -137,53 +139,96 @@ def get_aops_questions(max_problems: int) -> List[str]:
         if not q:
             continue
         questions.append(q)
-        if len(questions) >= max_problems:
+        if max_problems > 0 and len(questions) >= max_problems:
             break
 
     print(f"Collected {len(questions)} problems for candidate proof generation.")
     return questions
 
 
+def process_single_problem(idx: int, question: str, total: int, fout) -> bool:
+    """Process a single problem and write result to file. Returns True if successful."""
+    print(f"[{idx+1}/{total}] Generating candidate proofs...")
+
+    prompt = build_prompt(question)
+
+    for attempt in range(5):
+        try:
+            candidates = call_qwen_chat(
+                prompt,
+                n_candidates=N_CANDIDATES,
+                temperature=0.7,
+                top_p=0.8,
+                max_tokens=8192,
+            )
+            break
+        except Exception as e:
+            print(f"  [{idx+1}] API call failed, retry {attempt+1}: {e}")
+            time.sleep(5)
+    else:
+        print(f"  [{idx+1}] All retries failed, skipping this problem.")
+        return False
+
+    record: Dict[str, Any] = {
+        "index": idx,
+        "question": question,
+        "n_candidates": len(candidates),
+        "candidates": [
+            {
+                "candidate_index": i,
+                "content": cand,
+            }
+            for i, cand in enumerate(candidates)
+        ],
+    }
+
+    with file_lock:
+        fout.write(json.dumps(record, ensure_ascii=False) + "\n")
+        fout.flush()
+
+    print(f"[{idx+1}/{total}] Done.")
+    return True
+
+
 def main():
     questions = get_aops_questions(MAX_PROBLEMS)
 
-    with open(OUTPUT_JSONL, "w", encoding="utf-8") as fout:
-        for idx, q in enumerate(questions):
-            print(f"[{idx+1}/{len(questions)}] Generating candidate proofs...")
+    # Load completed indices if resuming
+    completed_indices: Set[int] = set()
+    if RESUME and os.path.exists(OUTPUT_JSONL):
+        completed_indices = load_completed_indices(OUTPUT_JSONL)
+        print(f"Resuming: found {len(completed_indices)} already completed problems.")
 
-            prompt = build_prompt(q)
+    # Filter out completed problems
+    pending_tasks = [(idx, q) for idx, q in enumerate(questions) if idx not in completed_indices]
 
-            for attempt in range(5):
-                try:
-                    candidates = call_qwen_chat(
-                        prompt,
-                        n_candidates=N_CANDIDATES,
-                        temperature=0.7,
-                        top_p=0.8,
-                        max_tokens=8192,
-                    )
-                    break
-                except Exception as e:
-                    print(f"  API call failed, retry {attempt+1}: {e}")
-                    time.sleep(5)
-            else:
-                print("  All retries failed, skipping this problem.")
-                continue
+    if not pending_tasks:
+        print("All problems already completed!")
+        return
 
-            record: Dict[str, Any] = {
-                "index": idx,
-                "question": q,
-                "n_candidates": len(candidates),
-                "candidates": [
-                    {
-                        "candidate_index": i,
-                        "content": cand,
-                    }
-                    for i, cand in enumerate(candidates)
-                ],
-            }
-            fout.write(json.dumps(record, ensure_ascii=False) + "\n")
-            fout.flush()
+    print(f"Processing {len(pending_tasks)} problems with {CONCURRENT_WORKERS} concurrent workers...")
+
+    # Open file in append mode if resuming, otherwise write mode
+    mode = "a" if RESUME and completed_indices else "w"
+
+    with open(OUTPUT_JSONL, mode, encoding="utf-8") as fout:
+        if CONCURRENT_WORKERS <= 1:
+            # Sequential processing
+            for idx, q in pending_tasks:
+                process_single_problem(idx, q, len(questions), fout)
+        else:
+            # Concurrent processing
+            with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS) as executor:
+                futures = {
+                    executor.submit(process_single_problem, idx, q, len(questions), fout): idx
+                    for idx, q in pending_tasks
+                }
+
+                completed = 0
+                for future in as_completed(futures):
+                    completed += 1
+                    if completed % 10 == 0:
+                        print(f"Progress: {completed}/{len(pending_tasks)} tasks completed")
 
     print(f"All done! Results saved to {OUTPUT_JSONL}")
 
