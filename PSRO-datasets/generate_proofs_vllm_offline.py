@@ -36,7 +36,7 @@ SEED = 42
 
 # Output settings
 OUTPUT_JSONL = "raw.jsonl"
-RESUME_FROM = 0         # Skip first N questions (0 = start from beginning)
+RESUME_FROM = 82501         # Skip first N questions (0 = start from beginning)
 
 # =============================================================================
 # Prompt Template
