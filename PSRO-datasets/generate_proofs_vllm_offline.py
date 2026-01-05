@@ -2,7 +2,7 @@
 Offline batch proof generation using vLLM.
 
 This script uses vLLM's offline inference API for high-throughput batch
-generation of mathematical proofs using Qwen3-8B.
+generation of mathematical proofs using Qwen3-4B-Instruct-2507.
 
 Usage:
     python generate_proofs_vllm_offline.py
@@ -20,56 +20,48 @@ from datasets import load_dataset
 # Configuration
 # =============================================================================
 
-MODEL_NAME = "/mnt/shared-storage-user/ma4agi-gpu/data/model/Qwen3-8B"
+# Use SFT-trained proof generation model
+MODEL_NAME = "/mnt/shared-storage-user/tanzelin-p/proof_gen_ckpt/sft_train-0/checkpoint-30/sft_train"
 
 # Generation settings
 N_CANDIDATES = 1           # Number of candidate proofs per problem
-MAX_PROBLEMS = 200000        # Max problems to process (-1 for all)
-TEMPERATURE = 0.7
+START_INDEX = 10000        # Skip first 10k (used for SFT training)
+END_INDEX = 100000          # Generate for indices 10000-60000
+TEMPERATURE = 0.5          # Lower temperature for more deterministic output
 TOP_P = 0.8
-MAX_TOKENS = 8192
+MAX_TOKENS = 8192          # Standard proofs are <4096 tokens
+REPETITION_PENALTY = 1.1   # Slightly lower since SFT model is better behaved
 
 # vLLM engine settings
-TENSOR_PARALLEL_SIZE = 2   # Number of GPUs for tensor parallelism
+TENSOR_PARALLEL_SIZE = 4   # Number of GPUs for tensor parallelism
 GPU_MEMORY_UTILIZATION = 0.8
 SEED = 42
 
 # Output settings
-OUTPUT_JSONL = "raw.jsonl"
-RESUME_FROM = 82501         # Skip first N questions (0 = start from beginning)
+OUTPUT_JSONL = "/mnt/shared-storage-user/tanzelin-p/sft_proofs_10k_100k.jsonl"
+RESUME_FROM = 0            # Resume offset within the selected range
 
 # =============================================================================
 # Prompt Template
 # =============================================================================
 
-PROMPT_TEMPLATE = """
-Your task is to solve a given problem. The problem may ask you to prove a statement, or ask for an answer. If finding an answer is required, you should come up with the answer, and your final solution should also be a rigorous proof of that answer being valid.
+# Match the SFT training instruction format
+INSTRUCTION = """Your task is to solve a given problem. The problem may ask you to prove a statement, or ask for an answer. If finding an answer is required, you should come up with the answer, and your final solution should also be a rigorous proof of that answer being valid.
 
 Your final solution to the problem should be exceptionally comprehensive and easy-to-follow. A good solution should satisfy the following criteria:
 
 - The solution should be completely correct, with all steps executed properly and clearly demonstrated.
 - The proof must be rigorous. Every step must be logically justified and clearly explained.
-- Additionally, referencing anything from any paper does not save the need to prove the reference. It is okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise, if the solution omits the proof or if the proof provided is not completely correct, the solution is incomplete.
-
-Important: You must be honest and rigorous in your proof. Do not fabricate steps, skip crucial reasoning, or claim something is true without proper justification. Remember! You CAN'T cheat! If you cheat, we will know, and you will be penalized!
-
-Your final response should be in the following format:
-
-## Solution
-... // Your final solution to the problem here.
-
----
-Here is your task input:
-
-## Problem
-{question}
-
-""".strip()
+- Additionally, referencing anything from any paper does not save the need to prove the reference. It is okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise, if the solution omits the proof or if the proof provided is not completely correct, the solution is incomplete."""
 
 
-def build_prompt(question: str) -> str:
-    """Build the full prompt from a question."""
-    return PROMPT_TEMPLATE.format(question=question)
+def build_prompt(question: str, tokenizer) -> str:
+    """Build the full prompt using chat template."""
+    messages = [
+        {"role": "system", "content": INSTRUCTION},
+        {"role": "user", "content": question}
+    ]
+    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
 
 def get_aops_questions(max_problems: int) -> List[str]:
@@ -98,17 +90,21 @@ def get_aops_questions(max_problems: int) -> List[str]:
     return questions
 
 
-def load_questions_from_csv(csv_path: str, max_problems: int) -> List[str]:
-    """Load questions from CSV file (alternative to HuggingFace)."""
+def load_questions_from_csv(csv_path: str, start_idx: int, end_idx: int) -> List[str]:
+    """Load questions from CSV file for specified index range."""
     import pandas as pd
     import ast
     import re
 
-    print(f"Loading questions from {csv_path}...")
+    print(f"Loading questions from {csv_path} (rows {start_idx} to {end_idx})...")
     df = pd.read_csv(csv_path)
 
+    # Select the specified range
+    df_subset = df.iloc[start_idx:end_idx]
+    print(f"Processing {len(df_subset)} rows...")
+
     questions: List[str] = []
-    for _, row in df.iterrows():
+    for _, row in df_subset.iterrows():
         try:
             raw = row["messages"]
             # Fix format: "}\n {" -> "}, {" (missing comma between list elements)
@@ -124,15 +120,12 @@ def load_questions_from_csv(csv_path: str, max_problems: int) -> List[str]:
         except (ValueError, SyntaxError, KeyError) as e:
             continue
 
-        if max_problems > 0 and len(questions) >= max_problems:
-            break
-
     print(f"Loaded {len(questions)} problems from CSV.")
     return questions
 
 
 def initialize_llm() -> LLM:
-    """Initialize the vLLM engine with Qwen3-8B."""
+    """Initialize the vLLM engine with Qwen3-4B-Instruct-2507."""
     print(f"Initializing vLLM with model: {MODEL_NAME}")
     print(f"  Tensor parallel size: {TENSOR_PARALLEL_SIZE}")
     print(f"  GPU memory utilization: {GPU_MEMORY_UTILIZATION}")
@@ -143,7 +136,7 @@ def initialize_llm() -> LLM:
         gpu_memory_utilization=GPU_MEMORY_UTILIZATION,
         seed=SEED,
         trust_remote_code=True,
-        max_model_len=MAX_TOKENS + 2048,  # Extra room for prompt
+        max_model_len=MAX_TOKENS,  # Extra room for prompt
         dtype="auto",
     )
 
@@ -158,6 +151,7 @@ def create_sampling_params() -> SamplingParams:
         temperature=TEMPERATURE,
         top_p=TOP_P,
         max_tokens=MAX_TOKENS,
+        repetition_penalty=REPETITION_PENALTY,
         seed=SEED,
     )
 
@@ -166,6 +160,7 @@ def generate_proofs_streaming(
     llm: LLM,
     questions: List[str],
     sampling_params: SamplingParams,
+    tokenizer,
     output_path: str,
     start_index: int = 0,
 ):
@@ -181,8 +176,8 @@ def generate_proofs_streaming(
     print(f"Submitting {total} prompts to vLLM engine...")
     print(f"Starting from index {start_index}, results will be appended to {output_path}")
 
-    # Build all prompts
-    prompts = [build_prompt(q) for q in questions]
+    # Build all prompts using chat template
+    prompts = [build_prompt(q, tokenizer) for q in questions]
 
     # Create request ID -> (index, question) mapping
     request_map: Dict[str, tuple] = {}
@@ -239,12 +234,19 @@ def generate_proofs_streaming(
 
 
 def main():
-    # Load questions
+    from transformers import AutoTokenizer
+
+    # Load tokenizer for chat template
+    print(f"Loading tokenizer from {MODEL_NAME}...")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+    # Load questions from specified range
     csv_path = "aops_instruct_train.csv"
     if os.path.exists(csv_path):
-        questions = load_questions_from_csv(csv_path, MAX_PROBLEMS)
+        questions = load_questions_from_csv(csv_path, START_INDEX, END_INDEX)
     else:
-        questions = get_aops_questions(MAX_PROBLEMS)
+        print("CSV file not found!")
+        return
 
     if not questions:
         print("No questions found!")
@@ -252,7 +254,7 @@ def main():
 
     # Skip already completed questions if resuming
     if RESUME_FROM > 0:
-        print(f"Resuming from index {RESUME_FROM}, skipping first {RESUME_FROM} questions...")
+        print(f"Resuming from offset {RESUME_FROM}, skipping first {RESUME_FROM} questions...")
         questions = questions[RESUME_FROM:]
         if not questions:
             print("No remaining questions to process!")
@@ -264,9 +266,9 @@ def main():
 
     # Generate proofs - write each result as it completes
     generate_proofs_streaming(
-        llm, questions, sampling_params,
+        llm, questions, sampling_params, tokenizer,
         output_path=OUTPUT_JSONL,
-        start_index=RESUME_FROM,
+        start_index=START_INDEX + RESUME_FROM,
     )
 
 

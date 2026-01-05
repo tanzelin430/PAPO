@@ -8,8 +8,8 @@ import threading
 
 import requests
 
-INPUT_JSONL = "test0.jsonl"
-OUTPUT_JSONL = "test1.jsonl"
+INPUT_JSONL = "/mnt/shared-storage-user/tanzelin-p/sft_proofs_10k_100k_clean.jsonl"
+OUTPUT_JSONL = "/mnt/shared-storage-user/tanzelin-p/sft_proofs_10k_100k_oracle.jsonl"
 
 API_BASE = "http://35.220.164.252:3888/v1/"
 API_KEY = "sk-7LyupxC6GN7FPr2KLGO5nprvJpyKG6kRcqesJeLpUqzfeDiq"
@@ -20,8 +20,9 @@ TEMPERATURE = 0.0
 MAX_TOKENS = 8192
 MAX_RETRIES = 3
 RETRY_SLEEP_SECONDS = 5
-NUM_WORKERS = 16  # 并发线程数
-MAX_RECORDS = 10  # 处理前N条记录
+NUM_WORKERS = 64  # 并发线程数
+START_RECORD = 0
+MAX_RECORDS = 100000  # 处理的记录数量（设大一点处理全部）
 
 CHAT_COMPLETIONS_PATH = "/chat/completions"
 
@@ -132,6 +133,23 @@ def iter_jsonl(path: str) -> Generator[Dict[str, Any], None, None]:
             yield json.loads(line)
 
 
+def load_processed_indices(path: str) -> set:
+    """读取已处理的记录，返回已完成的 index 集合"""
+    processed = set()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rec = json.loads(line)
+                if "index" in rec:
+                    processed.add(rec["index"])
+    except FileNotFoundError:
+        pass
+    return processed
+
+
 def verify_single_candidate(task: Tuple[int, int, str, str]) -> Tuple[int, int, Optional[Dict[str, Any]]]:
     """验证单个candidate，返回 (record_idx, candidate_idx, result)"""
     record_idx, cand_idx, question, proof = task
@@ -155,17 +173,40 @@ write_lock = threading.Lock()
 
 def main():
     print(f"Reading generated dataset: {INPUT_JSONL}")
-    records = list(iter_jsonl(INPUT_JSONL))[:MAX_RECORDS]
-    print(f"Loaded {len(records)} problem records.")
+    all_records = list(iter_jsonl(INPUT_JSONL))
+    print(f"Loaded {len(all_records)} problem records.")
+
+    # 加载已处理的记录
+    processed_indices = load_processed_indices(OUTPUT_JSONL)
+    print(f"Found {len(processed_indices)} already processed records in {OUTPUT_JSONL}")
+
+    # 根据 START_RECORD 和 MAX_RECORDS 筛选要处理的记录
+    end_record = min(START_RECORD + MAX_RECORDS, len(all_records))
+    records_to_process = []
+    record_index_map = {}  # 映射: 新索引 -> 原始记录
+
+    for ridx in range(START_RECORD, end_record):
+        rec = all_records[ridx]
+        rec_index = rec.get("index", ridx)
+        if rec_index in processed_indices:
+            continue  # 跳过已处理的
+        records_to_process.append((ridx, rec))
+        record_index_map[ridx] = rec
+
+    print(f"Processing records [{START_RECORD}, {end_record}), {len(records_to_process)} remaining after skipping processed")
+
+    if not records_to_process:
+        print("No new records to process. Done!")
+        return
 
     # 统计每个record有多少candidate
     record_candidate_counts = {}
-    for ridx, rec in enumerate(records):
+    for ridx, rec in records_to_process:
         record_candidate_counts[ridx] = len(rec.get("candidates", []))
 
     # 构建所有任务
     tasks: List[Tuple[int, int, str, str]] = []
-    for ridx, rec in enumerate(records):
+    for ridx, rec in records_to_process:
         question = rec.get("question", "")
         candidates = rec.get("candidates", [])
         for cand in candidates:
@@ -179,14 +220,14 @@ def main():
     # 存储结果的字典: {(record_idx, cand_idx): result}
     results: Dict[Tuple[int, int], Optional[Dict[str, Any]]] = {}
     # 追踪每个record完成了多少candidate
-    record_completed: Dict[int, int] = {i: 0 for i in range(len(records))}
+    record_completed: Dict[int, int] = {ridx: 0 for ridx, _ in records_to_process}
     # 追踪哪些record已经写入
     record_written: set = set()
     completed = 0
     records_written_count = 0
 
-    # 打开输出文件
-    out_f = open(OUTPUT_JSONL, "w", encoding="utf-8")
+    # 用追加模式打开输出文件
+    out_f = open(OUTPUT_JSONL, "a", encoding="utf-8")
 
     try:
         # 多线程执行
@@ -204,10 +245,17 @@ def main():
                     score = result.get("GT", "N/A") if result else "FAILED"
                     print(f"[{completed}/{total_tasks}] record={record_idx}, candidate={cand_idx}, score={score}")
 
+                    # 如果这个candidate失败了，标记整个record为失败
+                    if score == "FAILED":
+                        if record_idx not in record_written:
+                            record_written.add(record_idx)
+                            print(f"  >> Record {record_idx} SKIPPED (has FAILED candidate, will retry next run)")
+                        continue
+
                     # 这个record的所有candidate都完成了且还没写入，立即写入
                     if record_idx not in record_written and \
                        record_completed[record_idx] == record_candidate_counts[record_idx]:
-                        rec = records[record_idx]
+                        rec = record_index_map[record_idx]
                         candidates = rec.get("candidates", [])
                         for cand in candidates:
                             c_idx = cand.get("candidate_index")
@@ -217,12 +265,12 @@ def main():
                         out_f.flush()
                         record_written.add(record_idx)
                         records_written_count += 1
-                        print(f"  >> Record {record_idx} written to file ({records_written_count}/{len(records)})")
+                        print(f"  >> Record {record_idx} written to file ({records_written_count}/{len(records_to_process)})")
 
     finally:
         out_f.close()
 
-    print(f"Done! New dataset written to: {OUTPUT_JSONL}")
+    print(f"Done! {records_written_count} new records written to: {OUTPUT_JSONL}")
 
 
 if __name__ == "__main__":

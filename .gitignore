@@ -26,3 +26,5 @@ TestResults.xml
 *.csv
 # Claude 
 CLAUDE.md
+prepare_dataset/
+.claude/
