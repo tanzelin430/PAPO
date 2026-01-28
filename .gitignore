@@ -20,12 +20,29 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
-# data files
+
+# Data files
 *.jsonl
 *.jsonl.gz
 *.csv
-# Claude 
+*.parquet
+
+# Claude
 CLAUDE.md
 prepare_dataset/
 .claude/
 PR_DRAFT.md
+*.pdf
+IMPLEMENTATION_PLAN.md
+
+# Temporary files
+=10.1
+
+# Output directories
+**/output/
+**/wandb/
+**/outputs/
+
+# Error cases and debug
+errorcases/
+testout*.txt

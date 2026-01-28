@@ -1,108 +1,154 @@
-# PSRO4math
+# PSRO4Math: Process Reward Model for Mathematical Reasoning
 
-A dataset construction pipeline for math proof verification, integrated with ROLL (Reinforcement Learning Optimization for Large-Scale Learning) for model training.
+Mathematical reasoning RL training with **LLM-based Process Reward Model (PRM)** using the verl framework.
+
+## Project Goal
+
+Traditional Outcome Reward Models (ORM) only provide sparse binary signals (correct/wrong final answer). This project implements **Process Reward Models** that grade the reasoning process step-by-step, providing denser reward signals for better credit assignment in RL training.
+
+**Two Reward Approaches:**
+1. **Rule-based Reward**: Uses `math_verify` library to check final answer correctness (ORM baseline)
+2. **LLM-as-Judge Reward**: Uses LLM to grade solution process with IMO-style scoring (PRM)
 
 ## Project Structure
 
 ```
 PSRO4math/
-├── PSRO-datasets/           # Dataset construction pipeline
-│   ├── download_aops_instruct.py
-│   ├── generate_proofs_vllm_offline.py
-│   ├── oracle_label_inplace.py
-│   ├── convert_proof_gen_sft.py
-│   └── ...
-└── ROLL/                    # RL framework (git submodule)
+├── verl/                    # RL training framework (embedded source)
+│   ├── scripts/             # Training scripts
+│   │   ├── run_grpo_qwen3_4b_base_math.sh      # Rule-based reward (8 GPU)
+│   │   └── run_grpo_qwen3_4b_process_reward.sh # LLM process reward (2 GPU)
+│   ├── data/eval/           # Evaluation datasets (parquet)
+│   └── verl/utils/reward_score/
+│       ├── naive_dapo.py            # Rule-based math reward
+│       └── llm_process_reward.py    # LLM-as-Judge reward
+├── ROLL/                    # Legacy RL framework (git submodule, optional)
+└── requirements.txt         # Python dependencies
 ```
 
-## Setup
+## Environment Setup
+
+**Tested versions:** Python 3.12, PyTorch 2.9.1, CUDA 12.8, vLLM 0.14.0, flash-attn 2.8.3
+
+**Hardware:** 2-8 GPUs (H100/A100 recommended)
 
 ```bash
-# Clone with submodule
-git clone --recursive https://github.com/tanzelin430/PSRO4math.git
+# Clone repository
+git clone https://github.com/tanzelin430/PSRO4math.git
+cd PSRO4math
 
-# Or initialize submodule after clone
-git submodule update --init --recursive
+# Create conda environment
+conda create -n verl python=3.12 -y
+conda activate verl
 
-# Install ROLL
-cd ROLL && pip install -e .
+# Install vLLM (includes PyTorch and CUDA)
+pip install vllm==0.14.0
+
+# Install flash-attention (find matching wheel at https://github.com/Dao-AILab/flash-attention/releases)
+pip install flash-attn --no-build-isolation
+
+# Install verl
+cd verl && pip install -e .
+
+# Install extra dependencies
+cd .. && pip install -r requirements.txt
 ```
 
-## Dataset Construction
+## Running Experiments
 
-All commands run from `PSRO-datasets/` directory.
+### 1. Rule-based Reward (ORM Baseline)
 
-### Step 1: Download Base Dataset
+Uses `math_verify` library to check if final answer matches ground truth.
+
+**Training (8 GPU):**
+```bash
+cd verl
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export WANDB_MODE=offline
+bash scripts/run_grpo_qwen3_4b_base_math.sh
+```
+
+**Key Settings:**
+- Model: Qwen3-4B (Instruct)
+- Dataset: NuminaMath-1.5-RL-Verifiable (131k samples)
+- Reward: Binary (1.0 if correct, 0.0 otherwise)
+- Sampling: temperature=1.0 (critical for RL exploration)
+
+### 2. LLM-as-Judge Process Reward (PRM)
+
+Uses LLM to grade solution process with IMO-style scoring.
+
+**Training (2 GPU, for testing):**
+```bash
+cd verl
+export CUDA_VISIBLE_DEVICES=0,1
+export WANDB_MODE=offline
+bash scripts/run_grpo_qwen3_4b_process_reward.sh
+```
+
+**Scoring System:**
+| Score | Meaning | Normalized |
+|-------|---------|------------|
+| 7 | Correct solution | 1.0 |
+| 6 | Almost correct (minor issues) | 0.857 |
+| 1 | Partial progress | 0.143 |
+| 0 | Incorrect | 0.0 |
+
+**Architecture:**
+```
+Actor (Qwen3-1.7B/4B) → generates solution
+         ↓
+Reward Model (Qwen3-14B) → grades process → IMO score → normalized reward
+         ↓
+GRPO Training
+```
+
+## Evaluation Benchmarks
+
+| Dataset | Samples | Type |
+|---------|---------|------|
+| MATH-500 | 500 | Competition math |
+| AIME 2024 | 30 | AMC/AIME |
+| AIME 2025 | 30 | AMC/AIME |
+| AMC 2023 | 40 | AMC/AIME |
+| Olympiad | 674 | International olympiad |
+| Minerva | 272 | Scientific/math |
+| GPQA-Diamond | 198 | STEM multiple choice |
+
+Evaluation runs automatically during training (configurable via `test_freq`).
+
+## Key Configuration Notes
+
+### Sampling Parameters (Critical!)
+
+**DO NOT** use `top_p`, `top_k`, or `repetition_penalty` for RL training:
 
 ```bash
-python download_aops_instruct.py
+# WRONG - limits exploration, breaks RL
+temperature=0.7
+top_p=0.8
+top_k=20
+
+# CORRECT - allows proper exploration
+temperature=1.0
+# (no top_p, top_k, or repetition_penalty)
 ```
 
-Downloads AoPS-Instruct dataset from [HuggingFace](https://huggingface.co/datasets/DeepStudentLlama/AoPS-Instruct).
+### Qwen3 Model Notes
 
-### Step 2: Generate Proofs
+- Use `Qwen3-XB` (Instruct), NOT `Qwen3-XB-Base`
+- Disable thinking mode: `enable_thinking=False`
+- Base models don't understand chat format and produce garbage
 
-**Option A: Local vLLM (recommended)**
+## WandB Logging
+
+Training logs are saved in offline mode by default:
 
 ```bash
-# Configure MODEL_NAME and TENSOR_PARALLEL_SIZE in the script
-python generate_proofs_vllm_offline.py
+# Sync logs to WandB
+cd verl
+wandb sync wandb/offline-run-*
 ```
-
-**Option B: Remote API**
-
-```bash
-# Configure API_BASE, API_KEY in the script
-python generate_qwen3_proofs.py
-```
-
-### Step 3: Oracle Labeling
-
-```bash
-# Configure verifier API settings
-python oracle_label_inplace.py
-```
-
-### Step 4: Convert to SFT Format
-
-```bash
-python convert_proof_gen_sft.py    # For proof generation SFT
-python convert_to_sft_format.py    # For scoring model SFT
-```
-
-## SFT Training with ROLL
-
-See `ROLL/examples/` for training configurations:
-
-- `qwen3-4B-proof-gen/` - Proof generation model
-- `qwen3-4B-sft_scoring/` - Proof scoring model
-
-```bash
-cd ROLL
-python examples/start_sft_pipeline.py \
-  --config_path qwen3-4B-proof-gen \
-  --config_name sft_config
-```
-
-## Pipeline Flow
-
-```
-AoPS-Instruct (CSV)
-    ↓ generate_proofs_vllm_offline.py
-Candidate Proofs (JSONL)
-    ↓ oracle_label_inplace.py
-Labeled Proofs with GT scores (JSONL)
-    ↓ convert_*_sft.py
-SFT Training Data (JSON)
-    ↓ ROLL SFT Pipeline
-Trained Model
-```
-
-## Scoring System
-
-- **1.0**: Completely correct proof
-- **0.5**: Minor errors or omissions
-- **0.0**: Incorrect or fatal errors
 
 ## License
 

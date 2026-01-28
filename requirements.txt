@@ -1,0 +1,6 @@
+# Extra dependencies (verl dependencies installed via: cd verl && pip install -e .)
+
+# Math verification for rule-based reward
+math-verify
+pylatexenc
+latex2sympy2_extended
