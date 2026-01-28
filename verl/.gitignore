@@ -120,7 +120,7 @@ ENV/
 *.lock
 
 # data
-*.parquet
+# *.parquet  # Removed to allow eval/train data
 
 
 # local logs

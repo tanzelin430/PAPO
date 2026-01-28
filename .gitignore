@@ -25,7 +25,6 @@ TestResults.xml
 *.jsonl
 *.jsonl.gz
 *.csv
-*.parquet
 
 # Claude
 CLAUDE.md

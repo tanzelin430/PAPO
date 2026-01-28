@@ -1,4 +1,4 @@
-# PSRO4Math: Process Reward Model for Mathematical Reasoning
+# MathPRM: Process Reward Model for Mathematical Reasoning
 
 Mathematical reasoning RL training with **LLM-based Process Reward Model (PRM)** using the verl framework.
 

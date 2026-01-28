@@ -23,9 +23,10 @@ export VLLM_USE_V1=0
 export WANDB_MODE=offline
 
 # =================== Data Configuration ===================
-DATA_DIR="/mnt/shared-storage-user/tanzelin-p/PSRO4math/verl/data"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DATA_DIR="${SCRIPT_DIR}/../data"
 # Use process reward format data (includes reference_solution)
-TRAIN_FILE="/mnt/shared-storage-user/ma4agi-gpu/data/dataset/NuminaMath-1.5-RL-Verifiable/train_verl_format_process.parquet"
+TRAIN_FILE="${DATA_DIR}/train/train_verl_format_process.parquet"
 EVAL_DIR="${DATA_DIR}/eval"
 
 train_files="['${TRAIN_FILE}']"
