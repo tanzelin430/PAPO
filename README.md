@@ -31,9 +31,9 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
 </p>
 
 <p align="center">
-  <img src="figures/fig3_reward_hacking.png" width="90%">
+  <img src="figures/fig3_method_overview.png" width="90%">
   <br>
-  <em>Figure 3: Reward hacking diagnosis. (a) PRM training reward inflates to 1.0. (b) Response length explodes to 7000+ tokens. (c) Accuracy collapses after step 600.</em>
+  <em>Figure 3: Overview of PAPO. The advantage is computed through decoupled normalization: A_out is normalized over all responses via standard GRPO, while A_proc is normalized exclusively among correct responses (correct-subset normalization).</em>
 </p>
 
 Qwen2.5-7B-Base, ~1000 training steps:
