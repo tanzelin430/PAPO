@@ -77,7 +77,7 @@ REF_PP=1
 
 # =================== Sequence length ===================
 max_prompt_length=2048
-max_response_length=12288
+max_response_length=8192
 
 # =================== NO CPU offload ===================
 offload=False

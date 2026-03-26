@@ -24,25 +24,27 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
 
 ## Key Results
 
-<p align="center">
-  <img src="figures/fig1a_training_curves.png" width="75%">
-  <br>
-  <em>Figure 1(a): OlympiadBench evaluation during training. PAPO continues improving past the ORM roofline, while PRM collapses to 1.3% from reward hacking and ORM x PRM fails to exceed ORM.</em>
-</p>
+<table>
+<tr>
+<td width="58%"><img src="figures/fig1a_training_curves.png" width="100%"></td>
+<td width="42%"><img src="figures/fig1b_competition_math.png" width="100%"></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><em>Figure 1: (a) OlympiadBench training curves. (b) Accuracy on competition math benchmarks.</em></td>
+</tr>
+</table>
 
-<p align="center">
-  <img src="figures/fig1b_competition_math.png" width="55%">
-  <br>
-  <em>Figure 1(b): Accuracy on competition math benchmarks. PAPO consistently outperforms ORM and ORM x PRM across AIME 2024/2025 and OlympiadBench.</em>
-</p>
+**Figure 1(a)** shows OlympiadBench accuracy throughout training on Qwen2.5-7B-Base. ORM (blue) peaks at 46.3% around step 750 and then declines due to signal exhaustion — as the model improves, more response groups become uniformly correct, producing zero advantage and zero gradient. PRM Only (red) collapses catastrophically to 1.3% after step 600, driven by reward hacking: the model learns to inflate PRM scores through verbosity rather than correct reasoning. The naive multiplicative combination ORM x PRM (purple) tracks ORM closely but fails to surpass it, confirming that simply multiplying the two signals within a single normalization pass suppresses the process component. PAPO (green) breaks through the ORM roofline and continues improving to 51.3%, demonstrating that decoupled advantage normalization successfully integrates process-level evaluation without the instabilities of direct PRM use.
+
+**Figure 1(b)** confirms that PAPO's gains generalize across competition math benchmarks. On AIME 2024, AIME 2025, and OlympiadBench, PAPO consistently outperforms both ORM and ORM x PRM, with the largest improvements on harder benchmarks where signal exhaustion is most severe.
 
 <p align="center">
   <img src="figures/fig3_method_overview.png" width="90%">
   <br>
-  <em>Figure 3: Overview of PAPO. The advantage is computed through decoupled normalization: A_out is normalized over all responses via standard GRPO, while A_proc is normalized exclusively among correct responses (correct-subset normalization).</em>
+  <em>Figure 3: Overview of PAPO.</em>
 </p>
 
-Consistent gains across **3B to 14B** models and **six benchmarks**.
+**Figure 3** illustrates the PAPO pipeline. Given a prompt, the policy generates G responses. Each response receives two reward signals: a binary outcome reward (ORM) and a rubric-based process reward (PRM, only for correct responses). The key design is **decoupled normalization**: the outcome advantage A_out is normalized over all G responses via standard GRPO, while the process advantage A_proc is normalized exclusively among the correct subset. This correct-subset normalization prevents incorrect responses from exploiting high PRM scores, and ensures that A_proc provides a meaningful quality signal even when all responses are correct (where A_out would be zero). The final advantage A_total = A_out + A_proc combines both components with equal weight.
 
 ## Repository Structure
 
@@ -188,7 +190,7 @@ Key training hyperparameters (algorithm config):
 | `temperature` | `1.0` | **Critical**: no top_p/top_k for RL |
 | `n` (rollouts per prompt) | `8` | Group size for GRPO |
 | `train_batch_size` | `128` | Prompts per batch |
-| `max_response_length` | `12288` | Max tokens per response |
+| `max_response_length` | `8192` | Max tokens per response |
 
 ## Evaluation
 
