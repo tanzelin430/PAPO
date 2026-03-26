@@ -25,9 +25,15 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
 ## Key Results
 
 <p align="center">
-  <img src="figures/fig1_main_results.png" width="70%">
+  <img src="figures/fig1a_training_curves.png" width="75%">
   <br>
-  <em>Figure 1: OlympiadBench evaluation results. PAPO continues improving past the ORM roofline, while PRM collapses to 1.3% from reward hacking and ORM x PRM fails to exceed ORM.</em>
+  <em>Figure 1(a): OlympiadBench evaluation during training. PAPO continues improving past the ORM roofline, while PRM collapses to 1.3% from reward hacking and ORM x PRM fails to exceed ORM.</em>
+</p>
+
+<p align="center">
+  <img src="figures/fig1b_competition_math.png" width="55%">
+  <br>
+  <em>Figure 1(b): Accuracy on competition math benchmarks. PAPO consistently outperforms ORM and ORM x PRM across AIME 2024/2025 and OlympiadBench.</em>
 </p>
 
 <p align="center">
@@ -35,16 +41,6 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
   <br>
   <em>Figure 3: Overview of PAPO. The advantage is computed through decoupled normalization: A_out is normalized over all responses via standard GRPO, while A_proc is normalized exclusively among correct responses (correct-subset normalization).</em>
 </p>
-
-Qwen2.5-7B-Base, ~1000 training steps:
-
-| Method | OlympiadBench | MATH-500 | AIME 2025 | Behavior |
-|--------|:---:|:---:|:---:|----------|
-| ORM (GRPO) | 46.3 | 82.2 | 26.7 | Peaks then declines (signal exhaustion) |
-| PRM Only | ~5 | - | - | Collapses (reward hacking, length explosion) |
-| **PAPO** | **51.3** | **84.0** | **33.3** | **Continues improving past ORM plateau** |
-| Fullnorm (ablation) | 48.0 | 83.0 | - | Worse than correct-subset norm |
-| ORM x PRM (ablation) | 47.5 | 82.8 | - | Mixed signal baseline |
 
 Consistent gains across **3B to 14B** models and **six benchmarks**.
 
