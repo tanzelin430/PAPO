@@ -18,6 +18,7 @@ PPO Trainer with Ray-based single controller.
 This trainer supports model-agonistic model initialization with huggingface
 """
 
+import gc
 import json
 import os
 import uuid
@@ -245,6 +246,42 @@ def compute_advantage(
         )
         data.batch["advantages"] = advantages
         data.batch["returns"] = returns
+    elif adv_estimator == "grpo_dual":
+        # PA_GRPO: Dual-Objective GRPO (separate from standard GRPO)
+        grpo_calculation_mask = data.batch["response_mask"]
+        reward_prm = data.non_tensor_batch.get("reward_prm")
+        acc = data.non_tensor_batch.get("acc")
+        lp = config.get("lambda_process", 1.0) if config else 1.0
+        advantages, returns, dual_metrics = core_algos.compute_grpo_dual_objective_advantage(
+            token_level_rewards=data.batch["token_level_rewards"],
+            response_mask=grpo_calculation_mask,
+            index=data.non_tensor_batch["uid"],
+            reward_prm=reward_prm,
+            lambda_process=lp,
+            norm_adv_by_std_in_grpo=norm_adv_by_std_in_grpo,
+            acc=acc,
+        )
+        data.batch["advantages"] = advantages
+        data.batch["returns"] = returns
+        if dual_metrics:
+            data.meta_info["dual_objective_metrics"] = dual_metrics
+    elif adv_estimator == "grpo_dual_fullnorm":
+        # Ablation: PA_GRPO with A_proc normalized across ALL responses
+        grpo_calculation_mask = data.batch["response_mask"]
+        reward_prm = data.non_tensor_batch.get("reward_prm")
+        lp = config.get("lambda_process", 1.0) if config else 1.0
+        advantages, returns, dual_metrics = core_algos.compute_grpo_dual_fullnorm_advantage(
+            token_level_rewards=data.batch["token_level_rewards"],
+            response_mask=grpo_calculation_mask,
+            index=data.non_tensor_batch["uid"],
+            reward_prm=reward_prm,
+            lambda_process=lp,
+            norm_adv_by_std_in_grpo=norm_adv_by_std_in_grpo,
+        )
+        data.batch["advantages"] = advantages
+        data.batch["returns"] = returns
+        if dual_metrics:
+            data.meta_info["dual_objective_metrics"] = dual_metrics
     else:
         # handle all other adv estimator type other than GAE and GRPO
         adv_estimator_fn = core_algos.get_adv_estimator_fn(adv_estimator)
@@ -1677,6 +1714,10 @@ class RayPPOTrainer:
                             last_val_metrics = val_metrics
                     metrics.update(val_metrics)
 
+                # Force garbage collection before checkpoint save to free eval memory
+                # This prevents CPU OOM when eval and save overlap (e.g., at LCM of test_freq, save_freq)
+                gc.collect()
+
                 # Check if the ESI (Elastic Server Instance)/training plan is close to expiration.
                 esi_close_to_expiration = should_save_ckpt_esi(
                     max_steps_duration=self.max_steps_duration,
@@ -1731,6 +1772,9 @@ class RayPPOTrainer:
                 gradient_norm = metrics.get("actor/grad_norm", None)
                 metrics.update(compute_variance_proxy_metrics(batch=batch, gradient_norm=gradient_norm))
                 # Note: mismatch metrics (KL, PPL, etc.) are collected at line 1179 after advantage computation
+                # PA_GRPO dual-objective metrics
+                if hasattr(batch, 'meta_info') and "dual_objective_metrics" in getattr(batch, 'meta_info', {}):
+                    metrics.update(batch.meta_info["dual_objective_metrics"])
 
                 # this is experimental and may be changed/removed in the future in favor of a general-purpose one
                 if isinstance(self.train_dataloader.sampler, AbstractCurriculumSampler):

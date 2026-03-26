@@ -1,0 +1,134 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{yang2024qwen2,gemmateam2025gemma3technicalreport,touvron2023llamaopenefficientfoundation}
+\citation{guo2025deepseek}
+\citation{shao2024deepseekmath,deepseek-math-v2}
+\citation{shao2024deepseekmath}
+\citation{schulman2017proximal}
+\citation{zheng2023judgingllmasajudgemtbenchchatbot,lightman2023lets,wang2024math}
+\citation{yuan2025miraclesteps,deepseek-math-v2,Sheng2026ReinforcingCR,Yang2026}
+\citation{skalse2022defining}
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\citation{he2024olympiadbench}
+\citation{balunovic_srimatharena_2025}
+\citation{shao2024deepseekmath}
+\citation{schulman2017proximal}
+\citation{hendrycks2021measuring}
+\newlabel{fig:hero-a}{{1a}{2}{OlympiadBench evaluation results}{figure.caption.1}{}}
+\newlabel{sub@fig:hero-a}{{a}{2}{OlympiadBench evaluation results}{figure.caption.1}{}}
+\newlabel{fig:hero-b}{{1b}{2}{Accuracy on competition math}{figure.caption.1}{}}
+\newlabel{sub@fig:hero-b}{{b}{2}{Accuracy on competition math}{figure.caption.1}{}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:hero}{{1}{2}{\textbf {(a)} ORM (blue) plateaus and declines after step 750 due to signal exhaustion; PRM (red, dashed) collapses via reward hacking; ORM$\times $PRM (purple, dash-dotted) tracks ORM closely without exceeding it; \method {} (green) continues improving throughout training, reaching 51.3\%. \textbf {(b)} Comparison across AIME 2024/2025, OlympiadBench, and their average. Naive multiplicative combination (ORM$\times $PRM) barely improves over ORM, while \method {}'s decoupled normalization yields substantial gains on all benchmarks}{figure.caption.1}{}}
+\newlabel{sec:background}{{2}{2}{Background}{section.2}{}}
+\newlabel{sec:bg-grpo}{{2.1}{2}{Group Relative Policy Optimization}{subsection.2.1}{}}
+\newlabel{eq:grpo-loss}{{1}{2}{Group Relative Policy Optimization}{equation.1}{}}
+\newlabel{eq:grpo-adv}{{2}{2}{Group Relative Policy Optimization}{equation.2}{}}
+\citation{zheng2023judgingllmasajudgemtbenchchatbot,lightman2023lets,wang2024math}
+\citation{yuan2025miraclesteps,Sheng2026ReinforcingCR,Yang2026}
+\newlabel{sec:bg-rm}{{2.2}{3}{Reward Models for Mathematical Reasoning}{subsection.2.2}{}}
+\newlabel{sec:problem}{{3}{3}{Empirical analysis of PRM and ORM}{section.3}{}}
+\newlabel{sec:signal-exhaustion}{{3.1}{3}{Signal Exhaustion with Binary ORM}{subsection.3.1}{}}
+\newlabel{sec:reward-hacking}{{3.2}{3}{Reward Hacking with Direct PRM Integration}{subsection.3.2}{}}
+\newlabel{fig:reward_hacking}{{2}{4}{Reward signal analysis. \textbf {(a)} Training reward: PRM reward climbs to 1.0 (perfect score gaming); ORM$\times $PRM stays moderate. \textbf {(b)} Response length: PRM generates increasingly verbose responses; ORM$\times $PRM shows moderate length increase (up to $\sim $1700 tokens). \textbf {(c)} OlympiadBench accuracy: PRM collapses after step 600; ORM$\times $PRM tracks ORM but fails to exceed it, showing that naive signal combination does not resolve signal exhaustion}{figure.caption.6}{}}
+\newlabel{sec:method}{{4}{4}{Method: \method {}}{section.4}{}}
+\newlabel{sec:reward-pipeline}{{4.1}{4}{Dual Reward Signals}{subsection.4.1}{}}
+\newlabel{sec:decoupled-adv}{{4.2}{4}{Decoupled Advantage Normalization}{subsection.4.2}{}}
+\newlabel{eq:a-out}{{3}{4}{Step 1: Outcome advantage $\aout $}{equation.3}{}}
+\newlabel{eq:a-proc}{{4}{4}{Step 2: Process advantage $\aproc $ (correct-subset normalization)}{equation.4}{}}
+\citation{yang2024qwen2}
+\citation{yang2025qwen3technicalreport}
+\citation{sheng2024hybridflow}
+\citation{Yu2025a}
+\newlabel{fig:method_overview}{{3}{5}{Overview of \method {}. Given a prompt, the policy generates $G$ responses. Each response is evaluated by two reward signals: an \textbf {outcome reward} (ORM, binary correctness) and a \textbf {process reward} (PRM, rubric-based quality, only for \textbf {correct responses}). The advantage is computed through \textbf {decoupled normalization}: $\aout $ is normalized over all responses via standard GRPO, while $\aproc $ is normalized exclusively among correct responses (\emph {correct-subset normalization}). The combined advantage $\atotal = \aout + \aproc $ provides both correctness direction and quality differentiation}{figure.caption.11}{}}
+\newlabel{eq:a-total}{{5}{5}{Step 3: Combined advantage}{equation.5}{}}
+\newlabel{sec:rationale}{{4.3}{5}{Design Rationale}{subsection.4.3}{}}
+\newlabel{sec:experiments}{{5}{5}{Experiments}{section.5}{}}
+\newlabel{sec:setup}{{5.1}{5}{Experimental Setup}{subsection.5.1}{}}
+\citation{numina_math_datasets,nlile2025numinamath15rlverifiable}
+\citation{he2024olympiadbench}
+\citation{lightman2023lets}
+\citation{balunovic_srimatharena_2025}
+\citation{rein2024gpqa}
+\citation{chen2021evaluating}
+\citation{Yu2025a}
+\newlabel{tab:main_results}{{1}{6}{Accuracy (avg@4, \%) across six benchmarks and four model configurations. \method {} consistently improves over both GRPO and DAPO baselines: Qwen2.5-3B (+3.2), 7B (+3.1), 14B (+5.3), and Qwen3-4B on DAPO (+5.2). For Qwen3-4B-Base, \method {} is applied on top of DAPO. Bold indicates the better method}{table.caption.20}{}}
+\newlabel{sec:main-results}{{5.2}{6}{Main Results}{subsection.5.2}{}}
+\newlabel{sec:signal-analysis}{{5.3}{6}{Advantage Signal Analysis}{subsection.5.3}{}}
+\newlabel{fig:signal_exhaustion}{{4}{7}{Signal quality comparison on Qwen2.5-7B. \textbf {(a)} Zero-advantage ratio: ORM's sparsity grows to 69\% while \method {} maintains 44\%. \textbf {(b)} Advantage standard deviation, reflecting gradient signal strength. \textbf {(c)} Positive-advantage ratio, reflecting reinforcement density}{figure.caption.21}{}}
+\newlabel{tab:ablation}{{2}{7}{Ablation results (\%, avg@4, Qwen2.5-7B). All methods report accuracy}{table.caption.25}{}}
+\newlabel{sec:ablation}{{6}{7}{Ablation Studies}{section.6}{}}
+\citation{guo2025deepseek}
+\citation{shao2024deepseekmath}
+\citation{schulman2017proximal}
+\citation{minimax2025minimaxm1scalingtesttimecompute}
+\citation{gspo}
+\citation{Yu2025a}
+\citation{SAPO2025}
+\citation{yuan2025miraclesteps}
+\citation{liang-etal-2025-generative}
+\citation{deepseek-math-v2}
+\citation{fan2026exploring}
+\citation{Mahan2024}
+\citation{Yang2026}
+\citation{Yu2025b}
+\citation{Lee2025}
+\newlabel{sec:related}{{7}{8}{Related Work}{section.7}{}}
+\newlabel{sec:conclusion}{{8}{8}{Conclusion}{section.8}{}}
+\bibdata{custom}
+\bibcite{balunovic_srimatharena_2025}{{1}{2025}{{Balunović et~al.}}{{Balunović, Dekoninck, Petrov, Jovanović, and Vechev}}}
+\bibcite{chen2021evaluating}{{2}{2021}{{Chen et~al.}}{{Chen, Tworek, Jun, Yuan, de~Oliveira~Pinto, Kaplan, Edwards, Burda, Joseph, Brockman, Ray, Puri, Krueger, Petrov, Khlaaf, Sastry, Mishkin, Chan, Gray, Ryder, Pavlov, Power, Kaiser, Bavarian, Winter, Tillet, Such, Cummings, Plappert, Chantzis, Barnes, Herbert-Voss, Guss, Nichol, Paino, Tezak, Tang, Babuschkin, Balaji, Jain, Saunders, Hesse, Carr, Leike, Achiam, Misra, Morikawa, Radford, Knight, Brundage, Murati, Mayer, Welinder, McGrew, Amodei, McCandlish, Sutskever, and Zaremba}}}
+\bibcite{fan2026exploring}{{3}{2026}{{Fan et~al.}}{{Fan, Feng, Zhang, Peng, Li, Jiang, Chen, Pei, Cai, and Yue}}}
+\bibcite{SAPO2025}{{4}{2025}{{Gao et~al.}}{{Gao, Zheng, Chen, Dang, Liu, Yu, Yang, Bai, Zhou, and Lin}}}
+\bibcite{guo2025deepseek}{{5}{2025}{{Guo et~al.}}{{Guo, Yang, Zhang, Song, Zhang, Xu, Zhu, Ma, Wang, Bi, Zhang, Yu, Wu, Wu, Gou, Shao, Li, Gao, Liu, Xue, Wang, Wu, Feng, Lu, Zhao, Deng, Zhang, Ruan, Dai, Chen, Ji, Li, Lin, Dai, Luo, Hao, Chen, Li, Zhang, Bao, Xu, Wang, Ding, Xin, Gao, Qu, Li, Guo, Li, Wang, Chen, Yuan, Qiu, Li, Cai, Ni, Liang, Chen, Dong, Hu, Gao, Guan, Huang, Yu, Wang, Zhang, Zhao, Wang, Zhang, Xu, Xia, Zhang, Zhang, Tang, Li, Wang, Li, Tian, Huang, Zhang, Wang, Chen, Du, Ge, Zhang, Pan, Wang, Chen, Jin, Chen, Lu, Zhou, Chen, Ye, Wang, Yu, Zhou, Pan, Li, Zhou, Wu, Yun, Pei, Sun, Wang, Zeng, Zhao, Liu, Liang, Gao, Yu, Zhang, Xiao, An, Liu, Wang, Chen, Nie, Cheng, Liu, Xie, Liu, Yang, Li, Su, Lin, Li, Jin, Shen, Chen, Sun, Wang, Song, Zhou, Wang, Shan, Li, Wang, Wei, Zhang, Xu, Li, Zhao, Sun, Wang, Yu, Zhang, Shi, Xiong, He, Piao, Wang, Tan, Ma, Liu, Guo, Ou, Wang, Gong, Zou, He, Xiong, Luo, mei You, Liu, Zhou, Zhu, Huang, Li, Zheng, Zhu, Ma, Tang, Zha, Yan, Ren, Ren, Sha, Fu, Xu, Xie, guo Zhang, Hao, Ma, Yan, Wu, Gu, Zhu, Liu, Li, Xie, Song, Pan, Huang, Xu, Zhang, and Zhang}}}
+\bibcite{he2024olympiadbench}{{6}{2024}{{He et~al.}}{{He, Luo, Bai, Hu, Thai, Shen, Hu, Han, Huang, Zhang, Liu, Qi, Liu, and Sun}}}
+\bibcite{hendrycks2021measuring}{{7}{2021}{{Hendrycks et~al.}}{{Hendrycks, Burns, Kadavath, Arora, Basart, Tang, Song, and Steinhardt}}}
+\bibcite{gemmateam2025gemma3technicalreport}{{8}{2025}{{Kamath et~al.}}{{Kamath, Ferret, Pathak, Vieillard, Merhej, Perrin, Matejovicova, Ramé, Rivière, Rouillard, Mesnard, Cideron, bastien Grill, Ramos, Yvinec, Casbon, Pot, Penchev, Liu, Visin, Kenealy, Beyer, Zhai, Tsitsulin, Busa-Fekete, Feng, Sachdeva, Coleman, Gao, Mustafa, Barr, Parisotto, Tian, Eyal, Cherry, Peter, Sinopalnikov, Bhupatiraju, Agarwal, Kazemi, Malkin, Kumar, Vilar, Brusilovsky, Luo, Steiner, Friesen, Sharma, Sharma, Gilady, Goedeckemeyer, Saade, Feng, Kolesnikov, Bendebury, Abdagic, Vadi, György, Pinto, Das, Bapna, Miech, Yang, Paterson, Shenoy, Chakrabarti, Piot, Wu, Shahriari, Petrini, Chen, Lan, Choquette-Choo, Carey, Brick, Deutsch, Eisenbud, Cattle, Cheng, Paparas, Sreepathihalli, Reid, Tran, Zelle, Noland, Huizenga, Kharitonov, Liu, Amirkhanyan, Cameron, Hashemi, Klimczak-Plucińska, Singh, Mehta, Lehri, Hazimeh, Ballantyne, Szpektor, Nardini, Pouget-Abadie, Chan, Stanton, Wieting, Lai, Orbay, Fernandez, Newlan, yeong Ji, Singh, Black, Yu, Hui, Vodrahalli, Greff, Qiu, Valentine, Coelho, Ritter, Hoffman, Watson, Chaturvedi, Moynihan, Ma, Babar, Noy, Byrd, Roy, Momchev, Chauhan, Sachdeva, Bunyan, Botarda, Caron, Rubenstein, Culliton, Schmid, Sessa, Xu, Stanczyk, Tafti, Shivanna, Wu, Pan, Rokni, Willoughby, Vallu, Mullins, Jerome, Smoot, Girgin, Iqbal, Reddy, Sheth, Põder, Bhatnagar, Panyam, Eiger, Zhang, Liu, Yacovone, Liechty, Kalra, Evci, Misra, Roseberry, Feinberg, Kolesnikov, Han, Kwon, Chen, Chow, Zhu, Wei, Egyed, Cotruta, Giang, Kirk, Rao, Black, Babar, Lo, Moreira, Martins, Sanseviero, Gonzalez, Gleicher, Warkentin, Mirrokni, Senter, Collins, Barral, Ghahramani, Hadsell, Matias, Sculley, Petrov, Fiedel, Shazeer, Vinyals, Dean, Hassabis, Kavukcuoglu, Farabet, Buchatskaya, Alayrac, Anil, Dmitry, Lepikhin, Borgeaud, Bachem, Joulin, Andreev, Hardin, Dadashi, and Hussenot}}}
+\bibcite{Lee2025}{{9}{2026}{{Lee et~al.}}{{Lee, Zeng, Jeong, yong Sohn, and Lee}}}
+\bibcite{numina_math_datasets}{{10}{2024}{{LI et~al.}}{{LI, Beeching, Tunstall, Lipkin, Soletskyi, Huang, Rasul, Yu, Jiang, Shen, Qin, Dong, Zhou, Fleureau, Lample, and Polu}}}
+\bibcite{liang-etal-2025-generative}{{11}{2025}{{Liang et~al.}}{{Liang, Zhang, Li, Chen, Zhu, and Zhang}}}
+\bibcite{lightman2023lets}{{12}{2023}{{Lightman et~al.}}{{Lightman, Kosaraju, Burda, Edwards, Baker, Lee, Leike, Schulman, Sutskever, and Cobbe}}}
+\bibcite{Mahan2024}{{13}{2024}{{Mahan et~al.}}{{Mahan, Phung, Rafailov, Blagden, Lile, Castricato, Fränken, Finn, and Albalak}}}
+\bibcite{minimax2025minimaxm1scalingtesttimecompute}{{14}{2025}{{MiniMax}}{{}}}
+\bibcite{nlile2025numinamath15rlverifiable}{{15}{2025}{{nlile}}{{}}}
+\bibcite{rein2024gpqa}{{16}{2023}{{Rein et~al.}}{{Rein, Hou, Stickland, Petty, Pang, Dirani, Michael, and Bowman}}}
+\bibcite{schulman2017proximal}{{17}{2017}{{Schulman et~al.}}{{Schulman, Wolski, Dhariwal, Radford, and Klimov}}}
+\bibcite{deepseek-math-v2}{{18}{2025}{{Shao et~al.}}{{Shao, Luo, Lu, Ren, Hu, Ye, Gou, Ma, and Zhang}}}
+\bibcite{shao2024deepseekmath}{{19}{2024}{{Shao et~al.}}{{Shao, Wang, Zhu, Xu, Song, Zhang, Li, Wu, and Guo}}}
+\bibcite{sheng2024hybridflow}{{20}{2024}{{Sheng et~al.}}{{Sheng, Cao, Li, Gu et~al.}}}
+\bibcite{Sheng2026ReinforcingCR}{{21}{2026}{{Sheng et~al.}}{{Sheng, Ma, Hong, Wang, Zhang, and Chua}}}
+\bibcite{skalse2022defining}{{22}{2022}{{Skalse et~al.}}{{Skalse, Howe, Krasheninnikov, and Krueger}}}
+\bibcite{touvron2023llamaopenefficientfoundation}{{23}{2023}{{Touvron et~al.}}{{Touvron, Lavril, Izacard, Martinet, Lachaux, Lacroix, Rozière, Goyal, Hambro, Azhar, Rodriguez, Joulin, Grave, and Lample}}}
+\bibcite{wang2024math}{{24}{2024}{{Wang et~al.}}{{Wang, Li, Shao, Xu, Dai, Li, Chen, Wu, and Sui}}}
+\bibcite{yang2025qwen3technicalreport}{{25}{2025{a}}{{Yang et~al.}}{{Yang, Li, Yang, Zhang, Hui, Zheng, Yu, Gao, Huang, Lv, Zheng, Liu, Zhou, Huang, Hu, Ge, Wei, Lin, Tang, Yang, Tu, Zhang, Yang, Yang, Zhou, Zhou, Lin, Dang, Bao, Yang, Yu, Deng, Li, Xue, Li, Zhang, Wang, Zhu, Men, Gao, Liu, Luo, Li, Tang, Yin, Ren, Wang, Zhang, Ren, Fan, Su, Zhang, Zhang, Wan, Liu, Wang, Cui, Zhang, Zhou, and Qiu}}}
+\bibcite{yang2024qwen2}{{26}{2025{b}}{{Yang et~al.}}{{Yang, Yang, Zhang, Hui, Zheng, Yu, Li, Liu, Huang, Wei, Lin, Yang, Tu, Zhang, Yang, Yang, Zhou, Lin, Dang, Lu, Bao, Yang, Yu, Li, Xue, Zhang, Zhu, Men, Lin, Li, Tang, Xia, Ren, Ren, Fan, Su, Zhang, Wan, Liu, Cui, Zhang, and Qiu}}}
+\bibcite{Yang2026}{{27}{2026}{{Yang et~al.}}{{Yang, Wang, Kang, Yang, Yu, Niu, Sun, Hu, Lin, and Zhang}}}
+\bibcite{Yu2025a}{{28}{2025{a}}{{Yu et~al.}}{{Yu, Zhang, Zhu, Yuan, Zuo, Yue, Dai, Fan, Liu, Liu, Liu, Lin, Lin, Ma, Sheng, Tong, Zhang, Zhang, Zhang, Zhu, Zhu, Chen, Chen, Wang, Yu, Song, Wei, Zhou, Liu, Ma, Zhang, Yan, Qiao, Wu, and Wang}}}
+\bibcite{Yu2025b}{{29}{2025{b}}{{Yu et~al.}}{{Yu, Ji, Wang, Yao, Wang, Cui, Yuan, Ding, Yao, Liu, Sun, and Chua}}}
+\bibcite{yuan2025miraclesteps}{{30}{2025}{{Yuan et~al.}}{{Yuan, Mang, Chen, Wan, Liu, Xu, Huang, Wang, Jiao, and He}}}
+\bibcite{gspo}{{31}{2025}{{Zheng et~al.}}{{Zheng, Liu, Li, Chen, Yu, Gao, Dang, Liu, Men, Yang, Zhou, and Lin}}}
+\bibcite{zheng2023judgingllmasajudgemtbenchchatbot}{{32}{2023}{{Zheng et~al.}}{{Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li, Li, Xing, Zhang, Gonzalez, and Stoica}}}
+\bibstyle{acl_natbib}
+\citation{sheng2024hybridflow}
+\citation{Yu2025a}
+\citation{numina_math_datasets,nlile2025numinamath15rlverifiable}
+\newlabel{sec:appendix-impl}{{A}{12}{Implementation Details}{appendix.A}{}}
+\newlabel{tab:hyperparams}{{3}{12}{Training hyperparameters}{table.caption.30}{}}
+\newlabel{tab:dapo_hyperparams}{{4}{12}{Additional DAPO-specific hyperparameters for the Qwen3-4B-Base experiments. All other hyperparameters follow Table~\ref {tab:hyperparams}}{table.caption.31}{}}
+\newlabel{sec:training-data}{{A.2}{12}{Training Data}{subsection.A.2}{}}
+\newlabel{tab:difficulty}{{5}{12}{Difficulty distribution of the stratified training set. Pass rates are measured using a reference model with 8 attempts at temperature 1.0. Equal sampling across tiers ensures balanced difficulty coverage}{table.caption.32}{}}
+\newlabel{sec:rubric-prompt}{{A.3}{12}{Rubric Prompt}{subsection.A.3}{}}
+\newlabel{fig:training_curves_grid}{{5}{13}{Training curves (avg@4) across two model scales and three benchmarks. Top row: Qwen2.5-3B; bottom row: Qwen2.5-7B. \method {} consistently outperforms ORM throughout training on both scales, with gains widening in later stages as ORM's signal exhaustion worsens. The pattern is consistent across OlympiadBench (competition math), MATH-500 (standard math), and HumanEval (code generation). Qwen2.5-14B results are reported in Table~\ref {tab:main_results}}{figure.caption.33}{}}
+\newlabel{sec:appendix-results}{{B}{13}{Additional Results}{appendix.B}{}}
+\newlabel{sec:cross-scale-curves}{{B.1}{13}{Cross-Scale Training Curves}{subsection.B.1}{}}
+\newlabel{sec:rubric-analysis}{{B.3}{13}{Process Advantage Effect}{subsection.B.3}{}}
+\newlabel{sec:adv-decomp}{{B.4}{13}{Advantage Composition}{subsection.B.4}{}}
+\newlabel{fig:abl_fullnorm}{{6}{14}{Ablation: correct-subset normalization (\method {}) vs.\ full normalization (Fullnorm) on OlympiadBench and MATH-500. Both methods improve over ORM, but \method {}'s correct-subset design maintains a consistent advantage over Fullnorm throughout training}{figure.caption.34}{}}
+\newlabel{fig:abl_mult}{{7}{14}{Ablation: decoupled normalization (\method {}) vs.\ multiplicative reward (Mult) on OlympiadBench and MATH-500. Mult improves over ORM but falls substantially short of \method {}, confirming that decoupled normalization is superior to naive reward combination}{figure.caption.35}{}}
+\newlabel{fig:rubric_critic}{{8}{14}{\textbf {(a)} Minimum advantage among correct responses. ORM: identically 0.0 (all correct responses treated equally). \method {}: $\approx -1.49$ (the process advantage penalizes correct responses with poor reasoning). \textbf {(b)} Standard deviation of advantages among correct responses. ORM: zero (no differentiation). \method {}: non-zero (quality-based ranking within correct group)}{figure.caption.36}{}}
+\newlabel{sec:case-study-hacking}{{B.6}{14}{Case Study: PRM Reward Hacking}{subsection.B.6}{}}
+\newlabel{fig:adv_decomp}{{9}{15}{\method {} advantage composition. \textbf {(a)} Signal strength (std) of $\aout $ and $\aproc $: the outcome advantage provides the dominant gradient signal while the process advantage contributes a complementary quality signal. \textbf {(b)} Process signal active ratio: the fraction of groups where $\aproc $ is non-zero ($\geq 2$ correct responses), growing from $\sim $30\% to 70\% as the model improves. \textbf {(c)} Mean advantage by correctness: correct responses receive positive advantage while wrong responses receive negative, confirming the outcome signal functions correctly despite the added process component}{figure.caption.37}{}}
+\newlabel{tab:reward_hacking_case}{{6}{16}{Response statistics across five math problems. PRM reward hacking severity correlates with problem difficulty: on easier problems (bottom three rows), PRM step-1000 is comparable to baselines; on harder problems (top two rows), responses are 2--3$\times $ longer with characteristic degeneration patterns}{table.caption.38}{}}
+\gdef \@abspage@last{16}

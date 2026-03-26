@@ -612,3 +612,7 @@ class AlgoConfig(BaseConfig):
     # Rollout Correction: corrects off-policy issues (policy mismatch, model staleness, distribution shifts)
     # Set to None to disable, use RolloutCorrectionConfig presets (e.g., .tis(), .mis()), or pass dict
     rollout_correction: Optional[RolloutCorrectionConfig] = None
+
+    # PA_GRPO (Process-Aware GRPO) hyperparameters
+    # Used when algorithm.adv_estimator=grpo_dual
+    lambda_process: float = 1.0  # process advantage weight (1.0 = equal weight with outcome)

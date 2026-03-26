@@ -1,0 +1,54 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: acl_natbib.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: custom.bib
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Warning--empty journal in chen2021evaluating
+Warning--empty booktitle in Sheng2026ReinforcingCR
+You've used 32 entries,
+            3571 wiz_defined-function locations,
+            870 strings with 23251 characters,
+and the built_in function-call counts, 60313 in all, are:
+= -- 3087
+> -- 7618
+< -- 7
++ -- 2518
+- -- 2484
+* -- 5731
+:= -- 9708
+add.period$ -- 111
+call.type$ -- 32
+change.case$ -- 991
+chr.to.int$ -- 34
+cite$ -- 34
+duplicate$ -- 3415
+empty$ -- 2060
+format.name$ -- 2576
+if$ -- 11515
+int.to.chr$ -- 3
+int.to.str$ -- 1
+missing$ -- 966
+newline$ -- 146
+num.names$ -- 128
+pop$ -- 2050
+preamble$ -- 1
+purify$ -- 955
+quote$ -- 0
+skip$ -- 948
+stack$ -- 0
+substring$ -- 431
+swap$ -- 2012
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 288
+warning$ -- 2
+while$ -- 100
+width$ -- 0
+write$ -- 360
+(There were 2 warnings)

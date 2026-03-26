@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import random
+import shutil
 from collections.abc import Callable
 from dataclasses import asdict
 
@@ -391,6 +392,16 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                 if self.lr_scheduler is not None:
                     self.lr_scheduler.load_state_dict(lr_scheduler_state_dict)
                     log_with_rank(f"Loaded LR scheduler checkpoint from {local_path}", rank=self.rank, logger=logger)
+            elif "lr_scheduler" in state_dict and self.lr_scheduler is not None:
+                # Override mode: restore step counter from checkpoint while keeping
+                # new config values (lr_decay_steps, etc.) via _check_and_set override.
+                # This ensures lr schedule continues smoothly after resume.
+                self.lr_scheduler.load_state_dict(state_dict["lr_scheduler"])
+                log_with_rank(
+                    f"Restored LR scheduler step counter from checkpoint (override mode), "
+                    f"num_steps={self.lr_scheduler.num_steps}, lr_decay_steps={self.lr_scheduler.lr_decay_steps}",
+                    rank=self.rank, logger=logger,
+                )
 
         if self.should_load_extra:
             assert "rng_state" in state_dict, (
@@ -399,6 +410,16 @@ class MegatronCheckpointManager(BaseCheckpointManager):
             rng_state = state_dict["rng_state"]
             self.load_rng_states(rng_state)
             log_with_rank(f"Loaded RNG states from {local_path}", rank=self.rank, logger=logger)
+
+        # Load wandb_run_id if saved
+        wandb_state_path = os.path.join(local_path, "wandb_state.pt")
+        if os.path.exists(wandb_state_path):
+            wandb_state = torch.load(wandb_state_path, weights_only=False)
+            self.wandb_run_id = wandb_state.get("wandb_run_id", None)
+            if self.wandb_run_id:
+                log_with_rank(f"Loaded wandb_run_id from {wandb_state_path}", rank=self.rank, logger=logger)
+        else:
+            self.wandb_run_id = None
 
         if del_local_after_load:
             try:
@@ -410,7 +431,11 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                     logger=logger,
                 )
 
-    def save_checkpoint(self, local_path: str, hdfs_path: str = None, global_step: int = 0, max_ckpt_to_keep=None):
+    def get_wandb_run_id(self):
+        """Get the loaded wandb_run_id if it exists."""
+        return getattr(self, 'wandb_run_id', None)
+
+    def save_checkpoint(self, local_path: str, hdfs_path: str = None, global_step: int = 0, max_ckpt_to_keep=None, wandb_run_id=None):
         # record the previous global step
         self.previous_global_step = global_step
 
@@ -419,6 +444,14 @@ class MegatronCheckpointManager(BaseCheckpointManager):
 
         local_path = local_mkdir_safe(local_path)
         dist_checkpoint_path = get_dist_checkpoint_path(local_path)
+
+        # Clean leftover files in dist_checkpoint_path to avoid CheckpointException
+        # from torch.distributed.checkpoint when writing to a non-empty directory
+        if self.rank == 0 and os.path.exists(dist_checkpoint_path) and os.listdir(dist_checkpoint_path):
+            shutil.rmtree(dist_checkpoint_path)
+            os.makedirs(dist_checkpoint_path, exist_ok=True)
+            log_with_rank(f"Cleaned existing dist checkpoint dir: {dist_checkpoint_path}", rank=self.rank, logger=logger)
+        torch.distributed.barrier()
 
         # Note that model weights, optimizer states, and extra states are generated
         # together in a state dict, we save them in one time
@@ -559,6 +592,12 @@ class MegatronCheckpointManager(BaseCheckpointManager):
                 transformer_config_path = get_transformer_config_checkpoint_path(local_path)
                 with open(transformer_config_path, "w") as f:
                     json.dump(transformer_config_dict, f, indent=2)
+
+                # Save wandb_run_id for resume support
+                if wandb_run_id is not None:
+                    wandb_state_path = os.path.join(local_path, "wandb_state.pt")
+                    torch.save({"wandb_run_id": wandb_run_id}, wandb_state_path)
+                    log_with_rank(f"Saved wandb_run_id to {wandb_state_path}", rank=self.rank, logger=logger)
 
         if self.should_save_hf_model and not self.use_hf_checkpoint:
             # wait for everyone to dump to local

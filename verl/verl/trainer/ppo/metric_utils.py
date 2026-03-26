@@ -170,6 +170,10 @@ def compute_data_metrics(batch: DataProto, use_critic: bool = True) -> dict[str,
         "critic/advantages/mean": torch.mean(valid_adv).detach().item(),
         "critic/advantages/max": torch.max(valid_adv).detach().item(),
         "critic/advantages/min": torch.min(valid_adv).detach().item(),
+        "critic/advantages/std": torch.std(valid_adv).detach().item(),
+        "critic/advantages/median": torch.median(valid_adv).detach().item(),
+        "critic/advantages/p10": torch.quantile(valid_adv.float(), 0.1).detach().item(),
+        "critic/advantages/p90": torch.quantile(valid_adv.float(), 0.9).detach().item(),
         # returns
         "critic/returns/mean": torch.mean(valid_returns).detach().item(),
         "critic/returns/max": torch.max(valid_returns).detach().item(),
@@ -208,6 +212,35 @@ def compute_data_metrics(batch: DataProto, use_critic: bool = True) -> dict[str,
         "prompt_length/min": torch.min(prompt_length).detach().item(),
         "prompt_length/clip_ratio": torch.mean(torch.eq(prompt_length, max_prompt_length).float()).detach().item(),
     }
+
+    # Per-sample advantage distribution (split by correct/wrong)
+    # Compute sample-level advantage: mean advantage per response
+    sample_adv = (advantages * response_mask).sum(dim=-1) / response_mask.sum(dim=-1).clamp(min=1)  # (bs,)
+    sample_adv = sample_adv[non_aborted_mask]
+    sample_score = non_aborted_sequence_score
+
+    correct_mask_s = (sample_score >= 0.5)  # works for both binary and 3-tier
+    wrong_mask_s = (sample_score < 0.5)
+
+    if correct_mask_s.any():
+        adv_correct = sample_adv[correct_mask_s]
+        metrics["adv_distribution/correct_mean"] = adv_correct.mean().detach().item()
+        metrics["adv_distribution/correct_std"] = adv_correct.std().detach().item() if adv_correct.numel() > 1 else 0.0
+        metrics["adv_distribution/correct_min"] = adv_correct.min().detach().item()
+        metrics["adv_distribution/correct_max"] = adv_correct.max().detach().item()
+        metrics["adv_distribution/correct_count"] = adv_correct.numel()
+    if wrong_mask_s.any():
+        adv_wrong = sample_adv[wrong_mask_s]
+        metrics["adv_distribution/wrong_mean"] = adv_wrong.mean().detach().item()
+        metrics["adv_distribution/wrong_std"] = adv_wrong.std().detach().item() if adv_wrong.numel() > 1 else 0.0
+        metrics["adv_distribution/wrong_min"] = adv_wrong.min().detach().item()
+        metrics["adv_distribution/wrong_max"] = adv_wrong.max().detach().item()
+        metrics["adv_distribution/wrong_count"] = adv_wrong.numel()
+
+    # Fraction of samples with positive/negative/zero advantage
+    metrics["adv_distribution/positive_ratio"] = (sample_adv > 1e-6).float().mean().detach().item()
+    metrics["adv_distribution/negative_ratio"] = (sample_adv < -1e-6).float().mean().detach().item()
+    metrics["adv_distribution/zero_ratio"] = ((sample_adv.abs() <= 1e-6)).float().mean().detach().item()
 
     # multi-turn conversation
     if "__num_turns__" in batch.non_tensor_batch:

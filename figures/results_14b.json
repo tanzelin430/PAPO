@@ -1,0 +1,29 @@
+{
+  "model": "Qwen2.5-14B-Base",
+  "methods": {
+    "ORM": {
+      "AIME2024": 0.19,
+      "AIME2025": 0.1383,
+      "OlympiadBench": 0.543,
+      "MATH500": 0.823,
+      "GPQA_Diamond": 0.47,
+      "HumanEval": 0.66
+    },
+    "PA-GRPO": {
+      "AIME2024": 0.2433,
+      "AIME2025": 0.1783,
+      "OlympiadBench": 0.598,
+      "MATH500": 0.874,
+      "GPQA_Diamond": 0.55,
+      "HumanEval": 0.70
+    }
+  },
+  "deltas": {
+    "AIME2024": "+5.33%",
+    "AIME2025": "+4.00%",
+    "OlympiadBench": "+5.5%",
+    "MATH500": "+4.0%",
+    "GPQA_Diamond": "+8.0%",
+    "HumanEval": "+4.0%"
+  }
+}

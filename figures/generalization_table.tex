@@ -1,0 +1,36 @@
+% Theme package hints for this table (add in your preamble):
+% \usepackage{booktabs}
+% \usepackage{multirow}
+% \usepackage[table]{xcolor}
+% \usepackage{diagbox}
+% \usepackage{makecell}
+% \usepackage{adjustbox}
+% \usepackage{amssymb}
+% \usepackage{pifont}
+\setlength{\heavyrulewidth}{1.0pt}
+\setlength{\lightrulewidth}{0.5pt}
+\setlength{\arrayrulewidth}{0.5pt}
+\setlength{\aboverulesep}{0pt}
+\setlength{\belowrulesep}{0pt}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{cccccccccc}
+\toprule
+\multicolumn{2}{c}{\textbf{}} & \multicolumn{4}{>{\columncolor[RGB]{242,242,242}}c}{\textbf{Competition Mathematics}} & \cellcolor[RGB]{242,242,242}{\textbf{Standard}} & \cellcolor[RGB]{242,242,242}{\textbf{STEM}} & \cellcolor[RGB]{242,242,242}{\textbf{Code}} & \textbf{} \\
+\midrule
+\textbf{Model} & \textbf{Method} & \textbf{Olympiad} & \textbf{AIME'24} & \textbf{AIME'25} & \textbf{AIME'26} & \textbf{MATH-500} & \textbf{GPQA} & \textbf{HumanEval} & \textbf{Avg.} \\
+\multirow{2}{*}{\textbf{Qwen2.5-3B}} & ORM & 35.3 & 8.3 & 4.2 & 8.3 & 69 & 38.8 & 39.3 & 29 \\
+ & \textbf{PA-GRPO} & \textbf{38.6} & \textbf{10} & 3.3 & \textbf{9.5} & \textbf{73.2} & 36.3 & \textbf{52.5} & \textbf{31.9} \\
+ & \textit{Δ} & \textcolor[RGB]{34,139,34}{\textbf{+3.3}} & \textcolor[RGB]{34,139,34}{\textbf{+1.7}} & \textcolor[RGB]{204,0,0}{\textbf{-0.9}} & \textcolor[RGB]{34,139,34}{\textbf{+1.2}} & \textcolor[RGB]{34,139,34}{\textbf{+4.2}} & \textcolor[RGB]{204,0,0}{\textbf{-2.5}} & \textcolor[RGB]{34,139,34}{\textbf{+13.2}} & \textcolor[RGB]{34,139,34}{\textbf{+2.9}} \\
+\multirow{2}{*}{\textbf{Qwen2.5-7B}} & ORM & 46.3 & 10.8 & 10.8 & 11.7 & 80.2 & 40.7 & 61.6 & 37.4 \\
+ & \textbf{PA-GRPO} & \textbf{51.3} & \textbf{15.8} & \textbf{13.1} & \textbf{12.5} & \textbf{82.3} & \textbf{42.4} & \textbf{63.9} & \textbf{40.2} \\
+ & \textit{Δ} & \textcolor[RGB]{34,139,34}{\textbf{+5.0}} & \textcolor[RGB]{34,139,34}{\textbf{+5.0}} & \textcolor[RGB]{34,139,34}{\textbf{+2.3}} & \textcolor[RGB]{34,139,34}{\textbf{+0.8}} & \textcolor[RGB]{34,139,34}{\textbf{+2.1}} & \textcolor[RGB]{34,139,34}{\textbf{+1.7}} & \textcolor[RGB]{34,139,34}{\textbf{+2.3}} & \textcolor[RGB]{34,139,34}{\textbf{+2.7}} \\
+\multirow{2}{*}{\textbf{Qwen2.5-14B}} & ORM & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+ & \textbf{PA-GRPO} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+ & \textit{Δ} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+\multirow{2}{*}{\textbf{Qwen3-4B}} & ORM & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+ & \textbf{PA-GRPO} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+ & \textit{Δ} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} & \textcolor[RGB]{153,153,153}{\textit{\textemdash}} \\
+\bottomrule
+\end{tabular}
+\end{table}

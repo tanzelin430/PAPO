@@ -1,47 +1,70 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
-#launch.json folder
-.vscode/
-#Cache folder
-.alcache/
-#Symbols folder
-.alpackages/
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-file
-*.flf
-#Test results file
-TestResults.xml
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
 
-# Data files
+# Wandb
+**/wandb/
+wandb*/
+
+# Training outputs
+**/output/
+**/outputs/
+output_frames/
+
+# Temporary files
+*.db
+*.pkl
+*.pickle
+*.log
+*.tmp
+code_pickle
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data artifacts (keep .parquet in data/)
 *.jsonl
 *.jsonl.gz
 *.csv
 
-# Claude
-CLAUDE.md
-prepare_dataset/
-.claude/
-PR_DRAFT.md
-*.pdf
-IMPLEMENTATION_PLAN.md
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
-# Temporary files
+# Archives
+*.tar.gz
+*.zip
+
+# Misc junk
 =10.1
 
-# Output directories
-**/output/
-**/wandb/
-**/outputs/
+# Claude Code internal
+CLAUDE.md
+.claude/
+
+# Internal docs
+PR_DRAFT.md
+IMPLEMENTATION_PLAN.md
 
 # Error cases and debug
 errorcases/
 testout*.txt
+
+# Secrets (never commit)
+.env
+*.secret
+credentials.json

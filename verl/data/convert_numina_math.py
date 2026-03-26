@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input_path",
         type=str,
-        default="/mnt/shared-storage-user/ma4agi-gpu/data/dataset/NuminaMath-1.5-RL-Verifiable/data/train-00000-of-00001.parquet",
+        default="NuminaMath-1.5-RL-Verifiable/data/train-00000-of-00001.parquet",
         help="Path to input parquet file"
     )
     parser.add_argument(
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     # Auto-generate output path if not specified
     if args.output_path is None:
-        base_dir = "/mnt/shared-storage-user/ma4agi-gpu/data/dataset/NuminaMath-1.5-RL-Verifiable"
+        base_dir = os.path.dirname(os.path.dirname(args.input))
         if args.process_reward:
             args.output_path = f"{base_dir}/train_verl_format_process.parquet"
         else:

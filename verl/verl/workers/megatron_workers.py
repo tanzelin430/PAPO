@@ -39,7 +39,7 @@ from megatron.core import parallel_state as mpu
 from verl import DataProto
 from verl.models.mcore import get_mcore_weight_converter
 from verl.single_controller.base import Worker
-from verl.single_controller.base.decorator import Dispatch, make_nd_compute_dataproto_dispatch_fn, register
+from verl.single_controller.base.decorator import Dispatch, Execute, make_nd_compute_dataproto_dispatch_fn, register
 from verl.utils import hf_tokenizer
 from verl.utils.checkpoint.megatron_checkpoint_manager import MegatronCheckpointManager
 from verl.utils.config import omega_conf_to_dataclass
@@ -932,19 +932,24 @@ class ActorRolloutRefWorker(MegatronWorker, DistProfilerExtension):
         pass
 
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
-    def save_checkpoint(self, checkpoint_path, hdfs_path=None, global_step=0, max_ckpt_to_keep=None):
+    def save_checkpoint(self, checkpoint_path, hdfs_path=None, global_step=0, max_ckpt_to_keep=None, wandb_run_id=None):
         if self._is_offload_param:
             load_megatron_model_to_gpu(self.actor_module)
         if self.checkpoint_mananager.checkpoint_config.async_save and self._is_offload_optimizer:
             load_megatron_optimizer(self.actor_optimizer)
         self.checkpoint_mananager.save_checkpoint(
-            local_path=checkpoint_path, hdfs_path=hdfs_path, global_step=global_step, max_ckpt_to_keep=max_ckpt_to_keep
+            local_path=checkpoint_path, hdfs_path=hdfs_path, global_step=global_step, max_ckpt_to_keep=max_ckpt_to_keep, wandb_run_id=wandb_run_id
         )
         torch.distributed.barrier()
         if self._is_offload_param:
             offload_megatron_model_to_cpu(self.actor_module)
         if self.checkpoint_mananager.checkpoint_config.async_save and self._is_offload_optimizer:
             offload_megatron_optimizer(self.actor_optimizer)
+
+    @register(dispatch_mode=Dispatch.ALL_TO_ALL, execute_mode=Execute.RANK_ZERO)
+    def get_wandb_run_id(self):
+        """Get wandb_run_id from checkpoint_manager if available."""
+        return self.checkpoint_mananager.get_wandb_run_id() if hasattr(self.checkpoint_mananager, 'get_wandb_run_id') else None
 
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def async_calls_finalize_fn_exec(self, blocking=False):

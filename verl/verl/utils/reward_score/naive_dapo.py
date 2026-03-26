@@ -16,6 +16,7 @@
 import re
 import signal
 from typing import Optional
+import threading
 
 import sympy
 from pylatexenc import latex2text
@@ -24,6 +25,27 @@ import os
 from .prime_math import math_normalize
 from .prime_math.grader import math_equal
 from math_verify import parse, verify
+
+# Counter for sympy cache clearing (thread-safe)
+_sympy_call_counter = 0
+_sympy_call_counter_lock = threading.Lock()
+_SYMPY_CACHE_CLEAR_INTERVAL = 100  # Clear cache every N calls
+
+
+def _maybe_clear_sympy_cache():
+    """Periodically clear sympy cache to prevent memory leaks.
+
+    See: https://github.com/sympy/sympy/issues/26879
+    """
+    global _sympy_call_counter
+    with _sympy_call_counter_lock:
+        _sympy_call_counter += 1
+        if _sympy_call_counter >= _SYMPY_CACHE_CLEAR_INTERVAL:
+            _sympy_call_counter = 0
+            try:
+                sympy.core.cache.clear_cache()
+            except Exception:
+                pass
 
 
 class timeout:
@@ -368,7 +390,7 @@ def should_allow_eval(expr: str):
     return True
 
 
-@timeout(timeout_seconds=10)
+@timeout(timeout_seconds=2)
 def are_equal_under_sympy(ground_truth_normalized: str, given_normalized: str):
     are_equal = False
     try:
@@ -567,15 +589,18 @@ def compute_score(solution_str: str,
                   ground_truth: str,
                   extra_info: dict) -> float:
     """Compute the reward score for a solution. This draws heavily from the LLM-as-judge and PRIME reward functions
-    
+
     Args:
         solution_str: The solution string
         ground_truth: The ground truth answer
         extra_info: dict with additional info for the score computation
-        
+
     Returns:
         Reward score (1.0 for correct, -1.0 for incorrect)
     """
+    # Periodically clear sympy cache to prevent memory leaks
+    _maybe_clear_sympy_cache()
+
     try:
         # First assert intended generation and gt type
         model_output = str(solution_str)

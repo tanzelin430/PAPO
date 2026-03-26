@@ -87,8 +87,8 @@ def convert_jsonl_to_parquet(
 
 
 def main():
-    eval_benchmarks_dir = Path("/mnt/shared-storage-user/ma4agi-gpu/data/eval_benchmarks")
-    output_dir = Path("/mnt/shared-storage-user/tanzelin-p/PSRO4math/verl/data/eval")
+    eval_benchmarks_dir = Path(os.environ.get("EVAL_BENCHMARKS_DIR", "eval_benchmarks"))
+    output_dir = Path(os.path.join(os.path.dirname(__file__), "..", "data", "eval"))
 
     # Define benchmarks to convert
     benchmarks = [

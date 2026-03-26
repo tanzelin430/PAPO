@@ -1,0 +1,89 @@
+\pdfoutput=1
+
+\documentclass[11pt]{article}
+
+\usepackage{emnlp2023}
+
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+
+% Additional packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{stfloats}  % Fix double-column float placement
+\usepackage{enumitem}  % Compact lists
+\usepackage[most]{tcolorbox}  % Framed boxes for prompts
+
+% Line numbers handled by switch* in emnlp2023.sty (outer margins in two-column)
+
+% Custom commands
+\newcommand{\method}{PAPO}
+\newcommand{\aout}[1][]{A_{\text{out}\ifx\relax#1\relax\else,#1\fi}}
+\newcommand{\aproc}[1][]{A_{\text{proc}\ifx\relax#1\relax\else,#1\fi}}
+\newcommand{\atotal}[1][]{A_{\text{total}\ifx\relax#1\relax\else,#1\fi}}
+\newcommand{\placeholder}{\colorbox{yellow!40}{\textbf{TBD}}}
+\newcommand{\good}[1]{{\scriptsize\color{green!60!black}\textbf{#1}}}
+\newcommand{\bad}[1]{{\scriptsize\color{red!70!black}\textbf{#1}}}
+\newcommand{\zc}[1]{\textcolor{red}{[aidi: #1]}}
+\newcommand{\yzl}[1]{\textcolor{cyan}{[zhouliang: #1]}}
+\title{Stabilizing Rubric Integration Training via Decoupled
+Advantage Normalization}
+
+\author{
+  \mdseries
+  Zelin Tan$^{1,2}$ \quad
+  Zhouliang Yu$^{3}$ \quad
+  Bohan Lin$^{1}$ \quad
+  Zijie Geng$^{1}$ \quad
+  Hejia Geng$^{4}$ \quad
+  Yudong Zhang$^{1}$ \\
+  Mulei Zhang$^{5}$ \quad
+  Yang Chen$^{2}$ \quad
+  Shuyue Hu$^{2}$ \quad
+  Zhenfei Yin$^{4\dagger}$ \quad
+  Chen Zhang$^{2\dagger}$ \quad
+  Lei Bai$^{2}$ \\[6pt]
+  $^{1}$University of Science and Technology of China \quad
+  $^{2}$Shanghai Artificial Intelligence Laboratory \\
+  $^{3}$The Chinese University of Hong Kong \quad
+  $^{4}$University of Oxford \quad
+  $^{5}$Wuhan University \\[4pt]
+  {\small $^{\dagger}$Corresponding authors}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/problem}
+\input{sections/method}
+\input{sections/experiments}
+\input{sections/ablation}
+\input{sections/related}
+\input{sections/conclusion}
+\newpage
+\input{sections/limitations}
+
+\bibliography{custom}
+\bibliographystyle{acl_natbib}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

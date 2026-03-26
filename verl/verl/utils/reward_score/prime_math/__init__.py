@@ -209,7 +209,7 @@ def should_allow_eval(expr: str):
     return all(re.search(bad_regex, expr) is None for bad_regex in BAD_REGEXES)
 
 
-@timeout_limit(seconds=10)
+@timeout_limit(seconds=2)
 def are_equal_under_sympy(ground_truth_normalized: str, given_normalized: str):
     are_equal = False
     try:

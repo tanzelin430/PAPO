@@ -1,0 +1,36 @@
+{
+  "3B-ORM": {
+    "aime2024": {
+      "mean@4": 0.083333,
+      "std": 0.226691,
+      "n_problems": 30
+    },
+    "aime2025": {
+      "mean@4": 0.041667,
+      "std": 0.130437,
+      "n_problems": 30
+    },
+    "codegen__humaneval": {
+      "mean@4": 0.364329,
+      "std": 0.307863,
+      "n_problems": 164
+    }
+  },
+  "3B-PA-GRPO": {
+    "aime2024": {
+      "mean@4": 0.1,
+      "std": 0.189297,
+      "n_problems": 30
+    },
+    "aime2025": {
+      "mean@4": 0.033333,
+      "std": 0.140436,
+      "n_problems": 30
+    },
+    "codegen__humaneval": {
+      "mean@4": 0.498476,
+      "std": 0.360488,
+      "n_problems": 164
+    }
+  }
+}

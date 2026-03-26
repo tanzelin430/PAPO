@@ -224,16 +224,10 @@ class RolloutConfig(BaseConfig):
 
     def __post_init__(self):
         """Validate the rollout config"""
-        # Deprecation warning for mode field - only async mode is supported
-        if self.mode == "sync":
-            raise ValueError(
-                "Rollout mode 'sync' has been removed. Please set "
-                "`actor_rollout_ref.rollout.mode=async` or remove the mode setting entirely."
-            )
-        if self.mode != "async":
+        # Allow both sync and async modes
+        if self.mode not in ("sync", "async"):
             warnings.warn(
-                f"Unknown rollout mode '{self.mode}'. Only 'async' mode is supported. "
-                "The 'mode' field is deprecated and will be removed in a future version.",
+                f"Unknown rollout mode '{self.mode}'. Supported modes are 'sync' and 'async'.",
                 DeprecationWarning,
                 stacklevel=2,
             )
