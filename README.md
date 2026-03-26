@@ -25,15 +25,15 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
 ## Key Results
 
 <p align="center">
-  <img src="figures/fig1_training_curves.png" width="80%">
+  <img src="figures/fig1_main_results.png" width="70%">
   <br>
-  <em>OlympiadBench accuracy during training. ORM plateaus and declines; PRM collapses from reward hacking; PAPO continues improving.</em>
+  <em>Figure 1: OlympiadBench evaluation results. PAPO continues improving past the ORM roofline, while PRM collapses to 1.3% from reward hacking and ORM x PRM fails to exceed ORM.</em>
 </p>
 
 <p align="center">
-  <img src="figures/fig2_reward_hacking.png" width="80%">
+  <img src="figures/fig3_reward_hacking.png" width="90%">
   <br>
-  <em>Reward hacking diagnosis: PRM training reward inflates while response length explodes, leading to accuracy collapse. PAPO avoids this.</em>
+  <em>Figure 3: Reward hacking diagnosis. (a) PRM training reward inflates to 1.0. (b) Response length explodes to 7000+ tokens. (c) Accuracy collapses after step 600.</em>
 </p>
 
 Qwen2.5-7B-Base, ~1000 training steps:
