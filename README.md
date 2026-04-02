@@ -51,7 +51,44 @@ cd verl && bash scripts/run_grpo_qwen2.5_7b_base_megatron_8gpu_dual_lambda1.sh
 bash scripts/run_grpo_qwen2.5_7b_base_megatron_8gpu_baseline.sh
 ```
 
-Training scripts for other models (Qwen2.5-3B/14B, Qwen3-4B-Base) and ablations (PRM-only, full normalization, multiplicative) are in `verl/scripts/`. PAPO is also implemented on [ROLL](https://github.com/alibaba/ROLL) — see [`roll/README.md`](roll/README.md).
+Training scripts for other models (Qwen2.5-3B/14B, Qwen3-4B-Base) and ablations (PRM-only, full normalization, multiplicative) are in `verl/scripts/`.
+
+## Training with ROLL
+
+PAPO is also implemented on [ROLL](https://github.com/alibaba/ROLL) (supports Megatron-Core, DeepSpeed, FSDP2 backends).
+
+```bash
+# Install ROLL
+git clone https://github.com/alibaba/ROLL.git && cd ROLL
+pip install -e . && pip install -e mcore_adapter/
+
+# Apply PAPO modifications over ROLL's source
+cp <PAPO_ROOT>/roll/configs/base_config.py      roll/configs/
+cp <PAPO_ROOT>/roll/utils/functionals.py         roll/utils/
+cp <PAPO_ROOT>/roll/pipeline/rlvr/rlvr_config.py roll/pipeline/rlvr/
+cp <PAPO_ROOT>/roll/pipeline/rlvr/rewards/math_rule_reward_worker.py roll/pipeline/rlvr/rewards/
+
+# Copy example config
+cp <PAPO_ROOT>/roll/examples/pa_grpo_qwen2.5_7b_megatron_8gpu.yaml \
+   examples/pa_grpo_qwen2.5_7b/pa_grpo_config.yaml
+
+# Train PAPO
+python examples/start_rlvr_pipeline.py \
+  --config_path pa_grpo_qwen2.5_7b --config_name pa_grpo_config
+```
+
+Configure the LLM-as-Judge PRM endpoint in the YAML config:
+
+```yaml
+rewards:
+  math_rule:
+    use_dual_objective: true
+    prm_api_url: "http://localhost:8000/v1"
+    prm_api_key: "your-key"
+    prm_model: "gpt-oss-20b"
+```
+
+See [`roll/README.md`](roll/README.md) for full details.
 
 ## Method
 
