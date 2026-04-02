@@ -52,6 +52,9 @@ Thumbs.db
 # Misc junk
 =10.1
 
+# Paper (synced via Overleaf, not GitHub)
+paper/
+
 # Claude Code internal
 CLAUDE.md
 .claude/
