@@ -1,7 +1,7 @@
 # PAPO: Process-Aware Policy Optimization
 
 [![Dataset](https://img.shields.io/badge/HuggingFace-NuminaMath--20k--Stratified-yellow)](https://huggingface.co/datasets/Artemis0430/NuminaMath-20k-Stratified)
-[![arXiv](https://img.shields.io/badge/arXiv-coming%20soon-b31b1b)](https://arxiv.org/)
+[![arXiv](https://img.shields.io/badge/arXiv-2603.26535-b31b1b)](https://arxiv.org/abs/2603.26535)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 Official implementation of **"Stabilizing Rubric Integration Training via Decoupled Advantage Normalization"**.
@@ -50,7 +50,7 @@ This ensures that `A_out` anchors training on correctness while `A_proc` differe
 
 ```
 PAPO/
-├── verl/                                # verl framework (modified for PAPO)
+├── verl/                                # PAPO on verl framework
 │   ├── verl/
 │   │   ├── trainer/ppo/
 │   │   │   ├── core_algos.py            # PAPO advantage computation (grpo_dual)
@@ -65,6 +65,13 @@ PAPO/
 │   ├── scripts/                         # Training scripts (all models/variants)
 │   ├── data/eval/                       # Evaluation datasets (parquet)
 │   └── setup.py
+├── roll/                                # PAPO on ROLL framework
+│   ├── configs/base_config.py           # grpo_dual estimator + lambda_process
+│   ├── utils/functionals.py            # Dual advantage computation
+│   ├── pipeline/rlvr/rlvr_config.py    # RewardConfig with PRM fields
+│   ├── pipeline/rlvr/rewards/
+│   │   └── math_rule_reward_worker.py   # Extended with LLM-as-Judge PRM
+│   └── examples/                        # Example configs
 ├── paper/                               # LaTeX source
 ├── figures/                             # Experiment plots
 └── requirements.txt
@@ -85,26 +92,36 @@ PAPO/
 
 **Requirements:** Python 3.12, 8x GPUs (H100/H200 recommended), CUDA 12.x
 
+PAPO is implemented on two RL frameworks. Choose either:
+
+### Option A: verl
+
 ```bash
-# Clone
 git clone https://github.com/PAPO-anonymous/PAPO.git
 cd PAPO
 
-# Create environment
-conda create -n papo python=3.12 -y
-conda activate papo
-
-# Install vLLM (includes PyTorch + CUDA)
+conda create -n papo python=3.12 -y && conda activate papo
 pip install vllm==0.14.0
+pip install flash-attn --no-build-isolation
+cd verl && pip install -e . && cd ..
+pip install -r requirements.txt
+```
 
-# Install flash-attention
+### Option B: ROLL
+
+```bash
+git clone https://github.com/PAPO-anonymous/PAPO.git
+cd PAPO
+
+conda create -n papo python=3.12 -y && conda activate papo
+pip install vllm==0.14.0
 pip install flash-attn --no-build-isolation
 
-# Install verl
-cd verl && pip install -e . && cd ..
+# Install ROLL
+git clone https://github.com/alibaba/ROLL.git
+cd ROLL && pip install -e . && pip install -e mcore_adapter/ && cd ..
 
-# Install extra dependencies
-pip install -r requirements.txt
+# Apply PAPO modifications (see roll/README.md)
 ```
 
 ## LLM Grader Setup
@@ -124,7 +141,7 @@ export LLM_GRADER_API_KEY="your-key"
 export LLM_GRADER_MODEL="gpt-oss-20b"
 ```
 
-## Training
+## Training with verl
 
 ### PAPO (Qwen2.5-7B-Base, 8 GPU)
 
@@ -192,6 +209,41 @@ Key training hyperparameters (algorithm config):
 | `train_batch_size` | `128` | Prompts per batch |
 | `max_response_length` | `8192` | Max tokens per response |
 
+## Training with ROLL
+
+PAPO is also implemented on the [ROLL](https://github.com/alibaba/ROLL) framework, supporting Megatron-Core, DeepSpeed, and FSDP2 backends with vLLM/SGLang inference.
+
+### Setup
+
+```bash
+git clone https://github.com/alibaba/ROLL.git
+cd ROLL
+pip install -e .
+pip install -e mcore_adapter/
+```
+
+Apply PAPO modifications from `roll/` over ROLL's source files (see [`roll/README.md`](roll/README.md) for details).
+
+### PAPO (Qwen2.5-7B-Base, 8 GPU Megatron)
+
+```bash
+cd ROLL
+python examples/start_rlvr_pipeline.py \
+  --config_path pa_grpo_qwen2.5_7b \
+  --config_name pa_grpo_config
+```
+
+Configure the LLM-as-Judge PRM endpoint in the YAML config:
+
+```yaml
+rewards:
+  math_rule:
+    use_dual_objective: true
+    prm_api_url: "<your-llm-as-a-judge-api>/v1"
+    prm_api_key: "<your-api-key>"
+    prm_model: "<your-model-name>"
+```
+
 ## Evaluation
 
 Evaluation runs automatically during training (controlled by `test_freq`). Supported benchmarks:
@@ -249,19 +301,24 @@ The PRM evaluates reasoning quality of **correct** solutions using a rubric:
 ## Citation
 
 ```bibtex
-@article{tan2025papo,
-  title={Stabilizing Rubric Integration Training via Decoupled Advantage Normalization},
-  author={Tan, Zelin and Yu, Zhouliang and Lin, Bohan and Geng, Zijie and Geng, Hejia and Zhang, Yudong and Zhang, Mulei and Chen, Yang and Hu, Shuyue and Yin, Zhenfei and Zhang, Chen and Bai, Lei},
-  year={2025}
+@misc{tan2026stabilizingrubricintegrationtraining,
+      title={Stabilizing Rubric Integration Training via Decoupled Advantage Normalization}, 
+      author={Zelin Tan and Zhouliang Yu and Bohan Lin and Zijie Geng and Hejia Geng and Yudong Zhang and Mulei Zhang and Yang Chen and Shuyue Hu and Zhenfei Yin and Chen Zhang and Lei Bai},
+      year={2026},
+      eprint={2603.26535},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2603.26535}, 
 }
 ```
 
 ## License
 
-This project builds on [verl](https://github.com/volcengine/verl) (Apache 2.0). Our modifications are also released under the Apache 2.0 License.
+This project builds on [verl](https://github.com/volcengine/verl) and [ROLL](https://github.com/alibaba/ROLL) (both Apache 2.0). Our modifications are also released under the Apache 2.0 License.
 
 ## Acknowledgements
 
-- [verl](https://github.com/volcengine/verl) -- RL training framework
+- [verl](https://github.com/volcengine/verl) -- RL training framework (primary)
+- [ROLL](https://github.com/alibaba/ROLL) -- RL training framework (alternative, multi-backend)
 - [GPT-OSS-20B](https://huggingface.co/openai/gpt-oss-20b) -- LLM grader
 - [Qwen](https://github.com/QwenLM/Qwen2.5) -- Base models
