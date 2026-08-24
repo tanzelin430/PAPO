@@ -1,4 +1,4 @@
-# [EMNLP2026 MainConference]PAPO: Process-Aware Policy Optimization
+#PAPO: Process-Aware Policy Optimization
 
 [![arXiv](https://img.shields.io/badge/arXiv-2603.26535-b31b1b)](https://arxiv.org/abs/2603.26535)
 [![Dataset](https://img.shields.io/badge/HuggingFace-NuminaMath--20k--Stratified-yellow)](https://huggingface.co/datasets/Artemis0430/NuminaMath-20k-Stratified)
